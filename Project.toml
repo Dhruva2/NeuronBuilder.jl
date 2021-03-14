@@ -3,6 +3,10 @@ uuid = "bdec0aff-bc35-4528-862d-7dacab2b11a0"
 authors = ["Dhruva2 <dhruvaraman@hotmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
+
 [compat]
 julia = "1.5"
 
