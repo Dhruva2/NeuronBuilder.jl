@@ -3,14 +3,14 @@ module NeuronBuilder
 # Write your package code here.
 using ModelingToolkit, OrdinaryDiffEq
 
-include("initialisations.jl")
 include("channels.jl")
+include("synapses.jl")
 include("build_neuron.jl")
 
-export VoltageChannel, CalciumChannel
+export Synapse, Channel
 export NaV, CaS, CaT, H, Ka, KCa, Kdr, Leak
-export Synapse, Chol, Glut
-export build_channel, build_neuron
-export voltage_current, calcium_current
+export Chol, Glut
+export build_channel, build_synapse, build_neuron
+
 
 end

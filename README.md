@@ -1,6 +1,25 @@
 # NeuronBuilder
 
 
+Synapses and ion channels:
+
+Could we put them together?
+
+V ~ el.V for el in channel_systems
+instead: voltage_hook(v, el) for el in channel_systems
+calcium_hook(v,el), etc
+
+Instead of membrane currents and synaptic currents, could just have all currents.
+
+
+Synaptic hooks:
+V ~ el.Vpost
+Isyn ~ dVdt
+
+
+Instead of voltage_current and calcium_current:
+use ionic_current, and calcium_current.
+
 
 How to do:
 

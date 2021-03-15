@@ -1,38 +1,41 @@
 abstract type Channel end
+abstract type IonChannel <: Channel end
+
 
 """
 return unparameterised type as symbol
 """
-function get_name(ch::T) where T<:Channel 
+function get_name(ch::Channel) 
     Base.typename(ch |> typeof) |> Symbol
 end
 
 """
 fallback option for channels without a calcium current
 """
-function calcium_current(ch::T, sys::ODESystem) where T<:Channel
-    return Num(0.)
-end
+calcium_current(ch::Synapse, sys::ODESystem) = Num(0.)
+
+calcium_hook(Ca, ch::IonChannel, ch_sys::ODESystem) = Ca ~ el.Ca
 
 #################### Channels ###############################
 
 
 #################### NaV ###############################
-mutable struct NaV{S,T} <: Channel
+mutable struct NaV{S,T} <: IonChannel
     ḡNa::S
     mNa::T
     hNa::T
     ENa::T
 end
 
-NaV() = NaV(100., 0.,0., 50.)
+NaV(x) = NaV(x, 0.,0., 50.)
 NaV(x,y) = NaV(x, 0.,0., y)
+
 
 m∞(::NaV, V) =  1.0/(1.0+exp((V+25.5)/-5.29))
 h∞(::NaV, V) =  1.0/(1.0+exp((V+48.9)/5.18))
 τm(::NaV, V) =  1.32 - 1.26/(1+exp((V+120.0)/-25.0))
 τh(::NaV, V) =  (0.67/(1.0+exp((V+62.9)/-10.0)))*(1.5+1.0/(1.0+exp((V+34.9)/3.6)))
-voltage_current(::NaV, sys::ODESystem) = sys.INa
+ionic_current(::NaV, sys::ODESystem) = sys.INa
 
 
 function channel_dynamics(ch::NaV, V, Ca, D, t)    
@@ -49,7 +52,7 @@ end
 
 
 #################### Slow calcium current #############################
-mutable struct CaS{S,T} <: Channel
+mutable struct CaS{S,T} <: IonChannel
     ḡCaS::S
     τCa::S
     mCaS::T
@@ -63,7 +66,7 @@ m∞(::CaS, V) = 1.0/(1.0+exp((V+33.0)/-8.1))
 h∞(::CaS, V) = 1.0/(1.0+exp((V+60.0)/6.2))
 τm(::CaS, V) = 1.4 + 7.0/(exp((V+27.0)/10.0) + exp((V+70.0)/-13.0));
 τh(::CaS, V) = 60.0 + 150.0/(exp((V+55.0)/9.0) + exp((V+65.0)/-16.0));
-voltage_current(::CaS, sys::ODESystem) = sys.ICaS
+ionic_current(::CaS, sys::ODESystem) = sys.ICaS
 calcium_current(::CaS, sys::ODESystem) = sys.ICaS_Ca
 ECa(::CaS, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log((3000.0/Ca)))
 
@@ -84,7 +87,7 @@ end
 
 #################### Transient calcium current ######################
 
-mutable struct CaT{S,T} <: Channel
+mutable struct CaT{S,T} <: IonChannel
     ḡCaT::S
     τCa::S
     mCaT::T
@@ -97,7 +100,7 @@ h∞(::CaT, V) = 1.0/(1.0 + exp((V+32.1)/5.5))
 τm(::CaT, V) = 21.7 - 21.3/(1.0 + exp((V+68.1)/-20.5));
 τh(::CaT, V) = 105.0 - 89.8/(1.0 + exp((V+55.0)/-16.9));
 
-voltage_current(::CaT, sys::ODESystem) = sys.ICaT
+ionic_current(::CaT, sys::ODESystem) = sys.ICaT
 calcium_current(::CaT, sys::ODESystem) = sys.ICaT_Ca
 ECa(::CaT, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log((3000.0/Ca)))
 
@@ -115,22 +118,24 @@ function channel_dynamics(ch::CaT, V, Ca, D, t)
     return eqs, states, parameters, current, u0map, pmap
 end
 
-#################### A-type potassium current #########################
-
-mutable struct Ka{S,T} <: Channel
+####################  #########################
+"""
+A-type potassium current
+"""
+mutable struct Ka{S,T} <: IonChannel
     ḡKa::S
     mKa::T
     hKa::T
     EK::T
 end
 Ka(x,y) = Ka(x,0., 0.,y)
-Ka(x) = Ka(x,0.,0.,80.)
+Ka(x) = Ka(x,0.,0.,-80.)
 
 m∞(::Ka, V) = 1.0/(1.0+exp((V+27.2)/-8.7))
 h∞(::Ka, V) = 1.0/(1.0+exp((V+56.9)/4.9))
 τm(::Ka, V) = 11.6 - 10.4/(1.0+exp((V+32.9)/-15.2));
 τh(::Ka, V) = 38.6 - 29.2/(1.0+exp((V+38.9)/-26.5));
-voltage_current(::Ka, sys::ODESystem) = sys.IKa
+ionic_current(::Ka, sys::ODESystem) = sys.IKa
 
 function channel_dynamics(ch::Ka, V, Ca, D, t)    
     states = @variables mKa(t) hKa(t) IKa(t)
@@ -146,7 +151,100 @@ end
 
 ################### Calcium-activated potassium current ########
 
+mutable struct KCa{S,T} <: IonChannel
+    ḡKCa::S
+    mKCa::T
+    EK::T
+end
+
+KCa(x,y) = KCa(x,0.,y)
+KCa(x) = KCa(x,0., -80.)
+m∞(::KCa, V, Ca) = (Ca/(Ca+3.0))/(1.0+exp((V+28.3)/-12.6));
+τm(::KCa, V) = 90.3 - 75.1/(1.0+exp((V+46.0)/-22.7));
+ionic_current(::KCa, sys::ODESystem) = sys.IKCa
+
+function channel_dynamics(ch::KCa, V, Ca, D, t)    
+    states = @variables mKCa(t) IKCa(t)
+    parameters = @parameters ḡKCa EK 
+    eqs = [ D(mKCa) ~       (1/τm(ch, V))*(m∞(ch, V, Ca) - mKCa), 
+            IKCa ~ (ḡKCa*mKCa^4)*(EK - V)]   
+    current = [eqs[2]]
+    u0map = [mKCa => ch.mKCa]
+    pmap = [ḡKCa => ch.ḡKCa, EK => ch.EK]
+    return eqs, states, parameters, current, u0map, pmap
+end  
 
 
-#  cn = CalciumNeuron(50.,-20.,-80.,-50.,20.)
-                        #ENa Eh EK Eleak τCa)
+
+"""
+    Delayed rectifier potassium current
+"""
+mutable struct Kdr{S,T} <: IonChannel
+    ḡKdr::S
+    mKdr::T
+    EK::T
+end
+Kdr(x) = Kdr(x,0., -80.)
+Kdr(x,y) = Kdr(x,0.,y)
+m∞(::Kdr, V)=  1.0/(1.0+exp((V+12.3)/-11.8));
+τm(::Kdr, V)=  7.2 - 6.4/(1.0+exp((V+28.3)/-19.2));
+ionic_current(::Kdr, sys::ODESystem) = sys.IKdr
+
+function channel_dynamics(ch::Kdr, V, Ca, D, t)    
+    states = @variables mKdr(t) IKdr(t)
+    parameters = @parameters ḡKdr EK 
+    eqs = [ D(mKdr) ~       (1/τm(ch, V))*(m∞(ch, V) - mKdr), 
+            IKdr ~ (ḡKdr*mKdr^4)*(EK - V)]   
+    current = [eqs[2]]
+    u0map = [mKdr => ch.mKdr]
+    pmap = [ḡKdr => ch.ḡKdr, EK => ch.EK]
+    return eqs, states, parameters, current, u0map, pmap
+end  
+
+"""
+H current
+"""
+mutable struct H{S,T} <: IonChannel
+    ḡH::S
+    mH::T
+    EH::T
+end
+
+H(x) = H(x, 0., -20.)
+H(x,y) = H(x,0.,y)
+
+m∞(::H, V) = 1.0/(1.0+exp((V+70.0)/6.0))
+τm(::H, V) = (272.0 + 1499.0/(1.0+exp((V+42.2)/-8.73)))
+ionic_current(::H, sys::ODESystem) = sys.IH
+
+function channel_dynamics(ch::H, V, Ca, D, t)    
+    states = @variables mH(t) IH(t)
+    parameters = @parameters ḡH EH 
+    eqs = [ D(mH) ~       (1/τm(ch, V))*(m∞(ch, V) - mH), 
+            IH ~ ḡH*mH*(EH - V)]   
+    current = [eqs[2]]
+    u0map = [mH => ch.mH]
+    pmap = [ḡH => ch.ḡH, EH => ch.EH]
+    return eqs, states, parameters, current, u0map, pmap
+end  
+
+
+"""
+leak current
+"""
+mutable struct Leak{S} <: IonChannel
+    ḡLeak::S 
+    ELeak::S
+end
+Leak(x) = Leak(x, -50.)
+ionic_current(::Leak, sys::ODESystem) = sys.ILeak
+
+function channel_dynamics(ch::Leak, V, Ca, D, t)    
+    states = @variables ILeak(t)
+    parameters = @parameters ḡLeak ELeak 
+    eqs = [ILeak ~ ḡLeak*(ELeak - V)]   
+    current = [eqs[1]]
+    u0map = Dict()
+    pmap = [ḡLeak => ch.ḡLeak, ELeak => ch.ELeak]
+    return eqs, states, parameters, current, u0map, pmap
+end  
