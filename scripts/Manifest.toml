@@ -144,6 +144,12 @@ git-tree-sha1 = "c2ff625248a0967adff1dc1f79c6a41e2531f081"
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
 version = "6.57.8"
 
+[[DiffEqCallbacks]]
+deps = ["DataStructures", "DiffEqBase", "ForwardDiff", "LinearAlgebra", "NLsolve", "OrdinaryDiffEq", "RecipesBase", "RecursiveArrayTools", "StaticArrays"]
+git-tree-sha1 = "d4c4a3f442ab749b6b895c514b0be984c75d6d67"
+uuid = "459566f4-90b8-5000-8ac3-15dfb0a30def"
+version = "2.16.0"
+
 [[DiffEqJump]]
 deps = ["ArrayInterface", "Compat", "DataStructures", "DiffEqBase", "FunctionWrappers", "LinearAlgebra", "PoissonRandom", "Random", "RandomNumbers", "RecursiveArrayTools", "StaticArrays", "TreeViews", "UnPack"]
 git-tree-sha1 = "3ec8d5eeb792897b28ef79a851d834ce1415498f"
@@ -535,6 +541,12 @@ git-tree-sha1 = "e498ddeee6f9fdb4551ce855a46f54dbd900245f"
 uuid = "442fdcdd-2543-5da2-b0f3-8c86c306513e"
 version = "0.3.1"
 
+[[MinimallyDisruptiveCurves]]
+deps = ["DiffEqBase", "DiffEqCallbacks", "FiniteDiff", "ForwardDiff", "Latexify", "LinearAlgebra", "ModelingToolkit", "OrdinaryDiffEq", "RecipesBase", "SteadyStateDiffEq"]
+git-tree-sha1 = "b0a43fa82508070cb8b11ec7bd42a84b69c93d5d"
+uuid = "c6328df5-4af8-4637-a9e9-78ed74a2ae2b"
+version = "0.1.0"
+
 [[Missings]]
 deps = ["DataAPI"]
 git-tree-sha1 = "f8c673ccc215eb50fcadb285f522420e29e69e1c"
@@ -874,6 +886,12 @@ deps = ["Rmath", "SpecialFunctions"]
 git-tree-sha1 = "3b9f665c70712af3264b61c27a7e1d62055dafd1"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "0.9.6"
+
+[[SteadyStateDiffEq]]
+deps = ["DiffEqBase", "DiffEqCallbacks", "LinearAlgebra", "NLsolve", "Reexport", "SciMLBase"]
+git-tree-sha1 = "9b908c7a5933b8ec7c2da44a477f74127baa2ce9"
+uuid = "9672c7b4-1e72-59bd-8a11-6ac3964bc41f"
+version = "1.6.1"
 
 [[StructArrays]]
 deps = ["Adapt", "DataAPI", "Tables"]

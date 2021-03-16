@@ -1,11 +1,8 @@
-
+using ModelingToolkit, OrdinaryDiffEq, Plots
 
 
 AB1_channels = [NaV(100.), CaS(3.), CaT(1.3), H(0.5), Ka(5.), KCa(10.), Kdr(20.), Leak(0.01)]
-
 PY1_channels = [NaV(100.), CaS(1.), CaT(1.3), H(2.5), Ka(5.), KCa(0.), Kdr(25.), Leak(0.01)]
-
-
 LP1_channels = [NaV(100.), CaS(2.), CaT(0.), H(2.5), Ka(2.), KCa(0.), Kdr(5.), Leak(0.03)]
 
 ABLP_chol = Chol(30.)
@@ -41,9 +38,3 @@ prob = ODEProblem(final_sys,
                 (0.,500.),
                 collect(ModelingToolkit.get_default_p(final_sys)))
 
-
-
-
-
-eqs = [PY1.V ~ AB1.Chol.Vpre]
-cs = ODESystem(eqs, t, [], [], systems=[AB1, PY1])
