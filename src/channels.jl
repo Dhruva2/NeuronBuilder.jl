@@ -1,6 +1,6 @@
 abstract type Channel end
 abstract type IonChannel <: Channel end
-
+abstract type Synapse <: Channel end
 
 """
 return unparameterised type as symbol
@@ -12,10 +12,19 @@ end
 """
 fallback option for channels without a calcium current
 """
-calcium_current(ch::Synapse, sys::ODESystem) = Num(0.)
+calcium_current(ch::IonChannel, sys::ODESystem) = Num(0)
+voltage_hook(V, ch::IonChannel, sys::ODESystem) = V ~ sys.V 
+calcium_hook(Ca, ch::IonChannel, sys::ODESystem) = Ca ~ sys.Ca
 
-calcium_hook(Ca, ch::IonChannel, ch_sys::ODESystem) = Ca ~ el.Ca
+calcium_current(ch::Synapse, sys::ODESystem) = Num(0)
+voltage_hook(V, syn::Synapse, sys::ODESystem) = V ~ sys.Vpost
+calcium_hook(Ca, syn::Synapse, sys::ODESystem) = Num(0) ~ Num(0)
 
+has_input(syn::Synapse) = true
+has_input(ch::IonChannel) = false
+
+
+wanted_hook(syn::Synapse, sys::ODESystem) = sys.V
 #################### Channels ###############################
 
 

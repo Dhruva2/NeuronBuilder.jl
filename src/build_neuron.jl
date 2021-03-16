@@ -1,73 +1,100 @@
 
-function build_channel(ch::IonChannel)
+function build_channel(ch::IonChannel; name = get_name(ch))
     @parameters t
     D = Differential(t)
     @variables V(t) Ca(t)
     eqs, states, parameters, current, u0map, pmap = channel_dynamics(ch, V, Ca, D, t)
     return ODESystem(eqs, t, [V, Ca, states...], [parameters...]; 
                                             observed=current, 
-                                            name = get_name(ch), 
+                                            name = name, 
                                             default_u0 = u0map, 
                                             default_p = pmap)    
 end
 
 
-function build_channel(syn::Synapse)
+function build_channel(syn::Synapse; name = get_name(syn))
     @parameters t
     D = Differential(t)
     @variables Vpre(t) Vpost(t)
     eqs, states, parameters, current, u0map, pmap = channel_dynamics(syn, Vpre, Vpost, D, t)
     return ODESystem(eqs, t, [Vpre, Vpost, states...], [parameters...];    observed = current,
-                        name = get_name(syn),
+                        name = name,
                         default_u0 = u0map,
                         default_p = pmap)
 end
 
 
 
-function build_neuron(channels; synapses = [], V_init = -60, Ca_init = 0.05)
+function build_neuron(channels;  V_init = -60, Ca_init = 0.05, name = :unidentified_neuron, num_inputs = 0)
 
     @parameters t 
     states = @variables V(t) Ca(t)
+    syns = [Num(Variable{Symbolics.FnType{Tuple{Any},Real}}(Symbol(:Isyn, i)))(t) for i in 1:num_inputs]
+
     D = Differential(t)
     channel_systems = build_channel.(channels)
-    synapse_systems = build_synapse.(synapses)
-
+    
     summed_membrane_currents = sum(ionic_current(ch, ch_sys) for (ch, ch_sys) in zip(channels, channel_systems))
-
-    if length(synapases) > 0
-        summed_synaptic_currents = sum(synaptic_current(syn, syn_sys) for (syn, syn_sys) in zip(synapses, synapse_systems))
-    else
-        summed_synaptic_currents = Num(0.)
-    end
 
     summed_calcium_flux = sum(calcium_current(ch, ch_sys) for (ch, ch_sys) in zip(channels, channel_systems))
 
-    alg_connections = cat(
-                    [V ~ el.V for el in channel_systems],
-                    [Ca ~ el.Ca for el in channel_systems],
-                    [V ~ el.Vpost for el in synapse_systems],
+    connections = cat(
+                    [voltage_hook(V, ch, chs) for (ch, chs) in zip(channels, channel_systems)],
+                    [calcium_hook(Ca, ch, chs) for (ch, chs) in zip(channels, channel_systems)], 
                     dims=1
                     )  
 
     diffeqs =   cat(
-                [D(V) ~ summed_membrane_currents + summed_synaptic_currents],
+                [D(V) ~ summed_membrane_currents + sum(syns)],
                 [D(Ca) ~ summed_calcium_flux],
                 dims=1)               
 
-    eqs = cat(alg_connections, diffeqs; dims=1)
-    all_states = [states...]
+    eqs = cat(connections, diffeqs; dims=1)
+    eqs = filter(x -> !(x == (Num(0) ~ Num(0))), eqs)
+
+    all_states = [states..., syns...]
 
     neur = ODESystem(eqs, t, all_states, []; 
                     systems = channel_systems,
-                    default_u0 = [V => V_init, Ca => Ca_init]
+                    default_u0 = [V => V_init, Ca => Ca_init],
+                    name = name
                     )
+
+    
+
+    return neur
 end
 
 
-function ff(x)
-    if x == 1
-        return nothing
-    else
-        return x
+function build_group(arr_of_neurons; name = :group)
+    @parameters t 
+    eqs = Array{Equation,1}(undef,0)
+    ODESystem(eqs, t, [], []; name=name, systems = arr_of_neurons)
 end
+
+
+"""
+Issue: need to do all connections in one ḡChol
+
+"""
+function add_connection(group, pre, post, syn::Synapse; name = ModelingToolkit.getname(group), i=1)
+
+    @parameters t
+    prename, postname = ModelingToolkit.getname.([pre, post])
+    synapse = build_channel(syn; name = Symbol(prename, :to, postname, get_name(syn)))
+
+    oldeqs = ModelingToolkit.get_eqs(group)
+    neweqs = [
+            get_pre(syn, pre) ~ my_pre(syn, synapse),
+            get_post(syn, post) ~ my_post(syn, synapse),
+            ionic_current(syn, synapse) ~ getproperty(post, Symbol(post_connector(syn), i))
+    ]
+    
+    eqs = cat(oldeqs, neweqs, dims=1)
+    systems = cat(ModelingToolkit.get_systems(group), synapse, dims=1)
+
+    return connected = ODESystem(eqs, t, [], []; 
+                                name=name, 
+                                systems = systems)
+end
+
