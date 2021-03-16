@@ -16,7 +16,7 @@ mutable struct Chol{T} <: Synapse
     δ::T   # mV
 end
 Chol(x) = Chol(x,0.,-80., 0.01, -35., 5.)
-s̄(syn::Chol, Vpre)  = 1. / (1. + (exp(syn.Vth - Vpre)/syn.δ))
+s̄(syn::Chol, Vpre)  = 1. / (1. + exp((syn.Vth - Vpre)/syn.δ))
 τs(syn::Chol, Vpre) = (1. - s̄(syn, Vpre))/syn.k₋
 ionic_current(::Chol, sys::ODESystem) = sys.IChol
 
@@ -31,7 +31,7 @@ mutable struct Glut{T} <: Synapse
     δ::T  
 end
 Glut(x) = Glut(x,0.,-70., 0.025, -35., 5.)
-s̄(syn::Glut, Vpre)  = 1. / (1. + (exp(syn.Vth - Vpre)/syn.δ))
+s̄(syn::Glut, Vpre)  = 1. / (1. + exp((syn.Vth - Vpre)/syn.δ))
 τs(syn::Glut, Vpre) = (1. - s̄(syn, Vpre))/syn.k₋
 ionic_current(::Glut, sys::ODESystem) = sys.IGlut
 
@@ -39,7 +39,7 @@ function channel_dynamics(ch::Chol, Vpre, Vpost, D, t)
     states = @variables s(t) IChol(t)
     parameters = @parameters ḡChol
     eqs = [ D(s)  ~     (1/τs(ch, Vpre))*(s̄(ch, Vpre) - s),
-            IChol ~     ḡChol*s*(Vpost - ch.Eₛ)]
+            IChol ~     -ḡChol*s*(Vpost - ch.Eₛ)]
     current = [eqs[2]]
     u0map = [s => ch.s]
     pmap = [ḡChol => ch.ḡChol]
@@ -50,7 +50,7 @@ function channel_dynamics(ch::Glut, Vpre, Vpost, D, t)
     states = @variables s(t) IGlut(t)
     parameters = @parameters ḡGlut
     eqs = [ D(s) ~ (1/τs(ch, Vpre))*(s̄(ch, Vpre) - s),
-            IGlut ~ ḡGlut*s*(Vpost - ch.Eₛ)]
+            IGlut ~ -ḡGlut*s*(Vpost - ch.Eₛ)]
     current = [eqs[2]]
     u0map = [s => ch.s]
     pmap = [ḡGlut => ch.ḡGlut]

@@ -15,16 +15,6 @@ fallback option for channels without a calcium current
 calcium_current(ch::IonChannel, sys::ODESystem) = Num(0)
 voltage_hook(V, ch::IonChannel, sys::ODESystem) = V ~ sys.V 
 calcium_hook(Ca, ch::IonChannel, sys::ODESystem) = Ca ~ sys.Ca
-
-calcium_current(ch::Synapse, sys::ODESystem) = Num(0)
-voltage_hook(V, syn::Synapse, sys::ODESystem) = V ~ sys.Vpost
-calcium_hook(Ca, syn::Synapse, sys::ODESystem) = Num(0) ~ Num(0)
-
-has_input(syn::Synapse) = true
-has_input(ch::IonChannel) = false
-
-
-wanted_hook(syn::Synapse, sys::ODESystem) = sys.V
 #################### Channels ###############################
 
 
@@ -77,8 +67,8 @@ h∞(::CaS, V) = 1.0/(1.0+exp((V+60.0)/6.2))
 τh(::CaS, V) = 60.0 + 150.0/(exp((V+55.0)/9.0) + exp((V+65.0)/-16.0));
 ionic_current(::CaS, sys::ODESystem) = sys.ICaS
 calcium_current(::CaS, sys::ODESystem) = sys.ICaS_Ca
-ECa(::CaS, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log((3000.0/Ca)))
-
+ECa(::CaS, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log(max((3000.0/Ca), 0.001)))
+# ECa(::CaS, Ca) = 30.
 
 function channel_dynamics(ch::CaS, V, Ca, D, t)
     states = @variables mCaS(t) hCaS(t) ICaS(t) ICaS_Ca(t)
@@ -109,9 +99,10 @@ h∞(::CaT, V) = 1.0/(1.0 + exp((V+32.1)/5.5))
 τm(::CaT, V) = 21.7 - 21.3/(1.0 + exp((V+68.1)/-20.5));
 τh(::CaT, V) = 105.0 - 89.8/(1.0 + exp((V+55.0)/-16.9));
 
+
 ionic_current(::CaT, sys::ODESystem) = sys.ICaT
 calcium_current(::CaT, sys::ODESystem) = sys.ICaT_Ca
-ECa(::CaT, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log((3000.0/Ca)))
+ECa(::CaT, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log(max((3000.0/Ca), 0.001)))
 
 function channel_dynamics(ch::CaT, V, Ca, D, t)
     states = @variables mCaT(t) hCaT(t) ICaT(t) ICaT_Ca(t)
