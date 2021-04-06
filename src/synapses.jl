@@ -41,9 +41,8 @@ function channel_dynamics(ch::Chol, Vpre, Vpost, D, t)
     eqs = [ D(s)  ~     (1/τs(ch, Vpre))*(s̄(ch, Vpre) - s),
             IChol ~     -ḡChol*s*(Vpost - ch.Eₛ)]
     current = [eqs[2]]
-    u0map = [s => ch.s]
-    pmap = [ḡChol => ch.ḡChol]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [s => ch.s, ḡChol => ch.ḡChol]
+    return eqs, states, parameters, current, defaultmap
 end
 
 function channel_dynamics(ch::Glut, Vpre, Vpost, D, t)
@@ -52,7 +51,6 @@ function channel_dynamics(ch::Glut, Vpre, Vpost, D, t)
     eqs = [ D(s) ~ (1/τs(ch, Vpre))*(s̄(ch, Vpre) - s),
             IGlut ~ -ḡGlut*s*(Vpost - ch.Eₛ)]
     current = [eqs[2]]
-    u0map = [s => ch.s]
-    pmap = [ḡGlut => ch.ḡGlut]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [s => ch.s, ḡGlut => ch.ḡGlut]
+    return eqs, states, parameters, current, defaultmap
 end

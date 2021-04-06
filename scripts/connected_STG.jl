@@ -1,4 +1,4 @@
-using ModelingToolkit, OrdinaryDiffEq, Plots
+using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq
 
 
 # AB1_channels = [NaV(100.), CaS(3.), CaT(1.3), H(0.5), Ka(5.), KCa(10.), Kdr(20.), Leak(0.01)]
@@ -49,23 +49,22 @@ AB1 = build_neuron(AB1_channels; name=:AB1, num_inputs = 1)
 PY1 = build_neuron(PY1_channels; name = :PY1, num_inputs = 3)
 LP1 = build_neuron(LP1_channels; name = :LP1, num_inputs = 3)
 
-gr = build_group([AB1, PY1, LP1]; name=:STG)
+grp = build_group([AB1, PY1, LP1]; name=:STG)
 
-gr = add_connection(gr, AB1, LP1, ABLP_chol; i=1)
-gr = add_connection(gr, AB1, LP1, ABLP_glut; i=2)
-gr = add_connection(gr, PY1, LP1, PYLP_glut; i=3)
+grp = add_connection(grp, AB1, LP1, ABLP_chol; i=1)
+grp = add_connection(grp, AB1, LP1, ABLP_glut; i=2)
+grp = add_connection(grp, PY1, LP1, PYLP_glut; i=3)
 
-gr = add_connection(gr, LP1, AB1, LPAB_glut; i=1)
+grp = add_connection(grp, LP1, AB1, LPAB_glut; i=1)
 
-gr = add_connection(gr, LP1, PY1, LPPY_glut; i=1)
-gr = add_connection(gr, AB1, PY1, ABPY_glut; i=2)
-gr = add_connection(gr, AB1, PY1, ABPY_chol; i=3)
+grp = add_connection(grp, LP1, PY1, LPPY_glut; i=1)
+grp = add_connection(grp, AB1, PY1, ABPY_glut; i=2)
+grp = add_connection(grp, AB1, PY1, ABPY_chol; i=3)
 
 
 tspan = (0., 1000.)
-final_sys = structural_simplify(gr)
+final_sys = structural_simplify(grp)
 
-prob = ODEProblem(final_sys, 
-                collect(ModelingToolkit.get_default_u0(final_sys)),
-                tspan,
-                collect(ModelingToolkit.get_default_p(final_sys)))
+prob = ODEProblem(final_sys, [], tspan,[])
+
+sol = solve(prob, Rodas4())
