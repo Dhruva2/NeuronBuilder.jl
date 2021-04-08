@@ -44,9 +44,8 @@ function channel_dynamics(ch::NaV, V, Ca, D, t)
             D(hNa) ~       (1/τh(ch, V))*(h∞(ch, V) - hNa),
             INa ~ ḡNa*mNa^3*hNa*(ENa - V)]   
     current = [eqs[3]]
-    u0map = [mNa => ch.mNa, hNa => ch.hNa]
-    pmap = [ḡNa => ch.ḡNa, ENa => ch.ENa]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [mNa => ch.mNa, hNa => ch.hNa, ḡNa => ch.ḡNa, ENa => ch.ENa]
+    return eqs, states, parameters, current, defaultmap
 end  
 
 
@@ -79,9 +78,8 @@ function channel_dynamics(ch::CaS, V, Ca, D, t)
             ICaS_Ca ~ (1. / τCa)* (0.025 + 0.94ICaS - 0.5Ca)
             ]
     current = eqs[3:4]
-    u0map = [mCaS => ch.mCaS, hCaS => ch.hCaS]
-    pmap = [ḡCaS => ch.ḡCaS, τCa => ch.τCa]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [mCaS => ch.mCaS, hCaS => ch.hCaS, ḡCaS => ch.ḡCaS, τCa => ch.τCa]
+    return eqs, states, parameters, current, defaultmap
 end
 
 #################### Transient calcium current ######################
@@ -113,9 +111,8 @@ function channel_dynamics(ch::CaT, V, Ca, D, t)
             ICaT_Ca ~ (1. / τCa)* (0.025 + 0.94ICaT - 0.5Ca)
             ]
     current = eqs[3:4]
-    u0map = [mCaT => ch.mCaT, hCaT => ch.hCaT]
-    pmap = [ḡCaT => ch.ḡCaT, τCa => ch.τCa]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [mCaT => ch.mCaT, hCaT => ch.hCaT, ḡCaT => ch.ḡCaT, τCa => ch.τCa]
+    return eqs, states, parameters, current, defaultmap
 end
 
 ####################  #########################
@@ -144,9 +141,8 @@ function channel_dynamics(ch::Ka, V, Ca, D, t)
             D(hKa) ~       (1/τh(ch, V))*(h∞(ch, V) - hKa),
             IKa ~ ḡKa*mKa^3*hKa*(EK - V)]   
     current = [eqs[3]]
-    u0map = [mKa => ch.mKa, hKa => ch.hKa]
-    pmap = [ḡKa => ch.ḡKa, EK => ch.EK]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [mKa => ch.mKa, hKa => ch.hKa, ḡKa => ch.ḡKa, EK => ch.EK]
+    return eqs, states, parameters, current, defaultmap
 end  
 
 ################### Calcium-activated potassium current ########
@@ -169,9 +165,8 @@ function channel_dynamics(ch::KCa, V, Ca, D, t)
     eqs = [ D(mKCa) ~       (1/τm(ch, V))*(m∞(ch, V, Ca) - mKCa), 
             IKCa ~ (ḡKCa*mKCa^4)*(EK - V)]   
     current = [eqs[2]]
-    u0map = [mKCa => ch.mKCa]
-    pmap = [ḡKCa => ch.ḡKCa, EK => ch.EK]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [mKCa => ch.mKCa, ḡKCa => ch.ḡKCa, EK => ch.EK]
+    return eqs, states, parameters, current, defaultmap
 end  
 
 
@@ -196,9 +191,8 @@ function channel_dynamics(ch::Kdr, V, Ca, D, t)
     eqs = [ D(mKdr) ~       (1/τm(ch, V))*(m∞(ch, V) - mKdr), 
             IKdr ~ (ḡKdr*mKdr^4)*(EK - V)]   
     current = [eqs[2]]
-    u0map = [mKdr => ch.mKdr]
-    pmap = [ḡKdr => ch.ḡKdr, EK => ch.EK]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [mKdr => ch.mKdr, ḡKdr => ch.ḡKdr, EK => ch.EK]
+    return eqs, states, parameters, current, defaultmap
 end  
 
 """
@@ -223,9 +217,8 @@ function channel_dynamics(ch::H, V, Ca, D, t)
     eqs = [ D(mH) ~       (1/τm(ch, V))*(m∞(ch, V) - mH), 
             IH ~ ḡH*mH*(EH - V)]   
     current = [eqs[2]]
-    u0map = [mH => ch.mH]
-    pmap = [ḡH => ch.ḡH, EH => ch.EH]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [mH => ch.mH, ḡH => ch.ḡH, EH => ch.EH]
+    return eqs, states, parameters, current, defaultmap
 end  
 
 
@@ -244,7 +237,6 @@ function channel_dynamics(ch::Leak, V, Ca, D, t)
     parameters = @parameters ḡLeak ELeak 
     eqs = [ILeak ~ ḡLeak*(ELeak - V)]   
     current = [eqs[1]]
-    u0map = Dict()
-    pmap = [ḡLeak => ch.ḡLeak, ELeak => ch.ELeak]
-    return eqs, states, parameters, current, u0map, pmap
+    defaultmap = [ḡLeak => ch.ḡLeak, ELeak => ch.ELeak]
+    return eqs, states, parameters, current, defaultmap
 end  

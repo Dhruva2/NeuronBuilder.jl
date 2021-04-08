@@ -3,12 +3,11 @@ function build_channel(ch::IonChannel; name = get_name(ch))
     @parameters t
     D = Differential(t)
     @variables V(t) Ca(t)
-    eqs, states, parameters, current, u0map, pmap = channel_dynamics(ch, V, Ca, D, t)
+    eqs, states, parameters, current, defaultmap = channel_dynamics(ch, V, Ca, D, t)
     return ODESystem(eqs, t, [V, Ca, states...], [parameters...]; 
                                             observed=current, 
                                             name = name, 
-                                            default_u0 = u0map, 
-                                            default_p = pmap)    
+                                            defaults = defaultmap)
 end
 
 
@@ -16,11 +15,10 @@ function build_channel(syn::Synapse; name = get_name(syn))
     @parameters t
     D = Differential(t)
     @variables Vpre(t) Vpost(t)
-    eqs, states, parameters, current, u0map, pmap = channel_dynamics(syn, Vpre, Vpost, D, t)
+    eqs, states, parameters, current, defaultmap = channel_dynamics(syn, Vpre, Vpost, D, t)
     return ODESystem(eqs, t, [Vpre, Vpost, states...], [parameters...];    observed = current,
                         name = name,
-                        default_u0 = u0map,
-                        default_p = pmap)
+                        defaults = defaultmap)
 end
 
 
@@ -56,7 +54,7 @@ function build_neuron(channels;  V_init = -60, Ca_init = 0.05, name = :unidentif
 
     neur = ODESystem(eqs, t, all_states, []; 
                     systems = channel_systems,
-                    default_u0 = [V => V_init, Ca => Ca_init],
+                    defaults = [V => V_init, Ca => Ca_init],
                     name = name
                     )
 
