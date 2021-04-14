@@ -1,11 +1,11 @@
-abstract type Channel end
-abstract type IonChannel <: Channel end
-abstract type Synapse <: Channel end
+abstract type Conductance end
+abstract type IonChannel <: Conductance end
+abstract type Synapse <: Conductance end
 
 """
 return unparameterised type as symbol
 """
-function get_name(ch::Channel) 
+function get_name(ch::Conductance) 
     Base.typename(ch |> typeof) |> Symbol
 end
 
