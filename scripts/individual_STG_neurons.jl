@@ -18,24 +18,21 @@ PY1_channels = [NaV(100.), CaS(2.), CaT(2.4), H(0.05), Ka(50.), KCa(0.), Kdr(125
 
 PY1 = build_neuron(PY1_channels; name = :PY1)
 LP1 = build_neuron(PY1_channels; name = :LP1)
-AB1 = build_neuron(AB1_channels; name=:AB1)
+AB1 = build_neuron(AB1_channels; name = :AB1)
 
 final_PY1 = structural_simplify(PY1)
 probPY1 = ODEProblem(final_PY1, 
-                collect(ModelingToolkit.get_default_u0(final_PY1)),
-                (0.,1000.),
-                collect(ModelingToolkit.get_default_p(final_PY1)))
+                collect(ModelingToolkit.get_defaults(final_PY1)),
+                (0.,3000.))
 
 
 
 final_LP1 = structural_simplify(LP1)
 probLP1 = ODEProblem(final_LP1, 
-                collect(ModelingToolkit.get_default_u0(final_LP1)),
-                (0.,1000.),
-                collect(ModelingToolkit.get_default_p(final_LP1)))
+                collect(ModelingToolkit.get_defaults(final_LP1)),
+                (0.,3000.))
 
 final_AB1 = structural_simplify(AB1)
 probAB1 = ODEProblem(final_AB1, 
-                collect(ModelingToolkit.get_default_u0(final_AB1)),
-                (0.,1000.),
-                collect(ModelingToolkit.get_default_p(final_AB1)))
+                collect(ModelingToolkit.get_defaults(final_AB1)),
+                (0.,3000.))
