@@ -1,4 +1,4 @@
-using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq
+using ModelingToolkit, OrdinaryDiffEq
 
 
 # AB1_channels = [NaV(100.), CaS(3.), CaT(1.3), H(0.5), Ka(5.), KCa(10.), Kdr(20.), Leak(0.01)]
