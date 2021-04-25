@@ -1,7 +1,7 @@
 module NeuronBuilder
 
 # Write your package code here.
-using ModelingToolkit, OrdinaryDiffEq
+using ModelingToolkit, OrdinaryDiffEq, Unitful
 
 include("channels.jl")
 include("synapses.jl")

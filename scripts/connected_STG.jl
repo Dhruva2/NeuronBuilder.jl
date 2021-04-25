@@ -1,49 +1,22 @@
 using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq
 
+# Membrane ion channels
+AB1_channels = [NaV(100.), CaT(2.5), CaS(6.), Ka(50.), KCa(5.), Kdr(100.), H(0.01), Leak(0.00)]
+LP1_channels = [NaV(100.), CaT(0.0), CaS(4.), Ka(20.), KCa(0.), Kdr(25.), H(0.05), Leak(0.03)]
+PY1_channels = [NaV(100.), CaT(2.5), CaS(2.), Ka(50.), KCa(0.), Kdr(125.), H(0.05), Leak(0.01)]
 
-# AB1_channels = [NaV(100.), CaS(3.), CaT(1.3), H(0.5), Ka(5.), KCa(10.), Kdr(20.), Leak(0.01)]
-# PY1_channels = [NaV(100.), CaS(1.), CaT(1.3), H(2.5), Ka(5.), KCa(0.), Kdr(25.), Leak(0.01)]
-# LP1_channels = [NaV(100.), CaS(2.), CaT(0.), H(2.5), Ka(2.), KCa(0.), Kdr(5.), Leak(0.03)]
+# Synapses from pre-synaptic AB/PD -> post-synaptic target
+conv_factor = 1e-9/(0.628e-3*1e-3) # divide original nS by area and convert to mS
 
-AB1_channels = [NaV(100.), CaS(6.), CaT(2.5), H(0.01), Ka(50.), KCa(5.), Kdr(100.), Leak(0.01)]
-LP1_channels = [NaV(100.), CaS(4.), CaT(0.), H(0.05), Ka(20.), KCa(0.), Kdr(25.), Leak(0.03)]
-PY1_channels = [NaV(100.), CaS(2.), CaT(2.4), H(0.05), Ka(50.), KCa(0.), Kdr(125.), Leak(0.01)]
+ABLP_chol = Chol(30.0*conv_factor)  
+ABPY_chol = Chol(3.0*conv_factor) 
+ABLP_glut = Glut(30.0*conv_factor)  
+ABPY_glut = Glut(10.0*conv_factor)  
 
+LPAB_glut = Glut(30.0*conv_factor)  
+LPPY_glut = Glut(1.0*conv_factor) 
 
-## xolotl values
-#ABLP_chol = Chol(30.)
-#ABPY_chol = Chol(3.)
-#ABLP_glut = Glut(30.)
-#ABPY_glut = Glut(10.)
-#LPPY_glut = Glut(1.)
-#PYLP_glut = Glut(30.)
-#LPAB_glut = Glut(30.)
-
-## xolotl values divided by 10
- ABLP_chol = Chol(3.)
- ABPY_chol = Chol(0.3)
- ABLP_glut = Glut(3.)
- ABPY_glut = Glut(1.)
- LPPY_glut = Glut(0.1)
- PYLP_glut = Glut(3.)
- LPAB_glut = Glut(3.)
-
-#ABLP_chol = Chol(0.03)
-#ABPY_chol = Chol(0.003)
-#ABLP_glut = Glut(0.03)
-#ABPY_glut = Glut(0.01)
-#LPPY_glut = Glut(0.001)
-#PYLP_glut = Glut(0.03)
-#LPAB_glut = Glut(0.03)
-
-
-# ABLP_chol = Chol(3.)
-# ABPY_chol = Chol(0.01)
-# ABLP_glut = Glut(0.01)
-# ABPY_glut = Glut(1.)
-# LPPY_glut = Glut(0.1)
-# PYLP_glut = Glut(0.1)
-# LPAB_glut = Glut(10.)
+PYLP_glut = Glut(30.0*conv_factor)  
 
 AB1 = build_neuron(AB1_channels; name = :AB1, num_inputs = 1)
 PY1 = build_neuron(PY1_channels; name = :PY1, num_inputs = 3)
@@ -62,9 +35,11 @@ grp = add_connection(grp, AB1, PY1, ABPY_glut; i=2)
 grp = add_connection(grp, AB1, PY1, ABPY_chol; i=3)
 
 
-tspan = (0., 1000.)
+tspan = (0., 5000.)
 final_sys = structural_simplify(grp)
 
 prob = ODEProblem(final_sys, [], tspan,[])
 
 sol = solve(prob, ImplicitEuler(), dt = 0.025)
+
+
