@@ -1,4 +1,7 @@
-using ModelingToolkit, OrdinaryDiffEq
+using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
+
+# Using parameters from Prinz (2004) Similar network activity from disparate circuit parameters
+# These are specifically Figure 3e (and Table 2 for current values)
 
 # Membrane ion channels
 AB1_channels = [NaV(100.), CaT(2.5), CaS(6.), Ka(50.), KCa(5.), Kdr(100.), H(0.01), Leak(0.00)]
@@ -6,7 +9,7 @@ LP1_channels = [NaV(100.), CaT(0.0), CaS(4.), Ka(20.), KCa(0.), Kdr(25.), H(0.05
 PY1_channels = [NaV(100.), CaT(2.5), CaS(2.), Ka(50.), KCa(0.), Kdr(125.), H(0.05), Leak(0.01)]
 
 # Synapses from pre-synaptic AB/PD -> post-synaptic target
-conv_factor = 1e-9/(0.628e-3*1e-3) # divide original nS by area and convert to mS
+conv_factor = 1e-9/(0.628e-3*1e-3) # HACK: divide original nS by Prinz model area and convert to mS
 
 ABLP_chol = Chol(30.0*conv_factor)  
 ABPY_chol = Chol(3.0*conv_factor) 
@@ -42,4 +45,4 @@ prob = ODEProblem(final_sys, [], tspan,[])
 
 sol = solve(prob, ImplicitEuler(), dt = 0.025)
 
-
+plot(sol)

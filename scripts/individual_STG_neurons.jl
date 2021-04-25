@@ -1,4 +1,4 @@
-using  ModelingToolkit, OrdinaryDiffEq, Plots
+using  NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
 
 ## xolotl versions
 # AB1_channels = [NaV(1000.), CaS(60.), CaT(25.), H(0.1), Ka(500.), KCa(50.), Kdr(1000.), Leak(0.)]
@@ -20,7 +20,6 @@ PY1_channels = [NaV(100.), CaS(2.), CaT(2.4), H(0.05), Ka(50.), KCa(0.), Kdr(125
 AB1_channels = [NaV(100.), CaS(3.), CaT(1.3), H(0.5), Ka(5.), KCa(10.), Kdr(20.), Leak(0.01)]
 
 
-
 PY1 = build_neuron(PY1_channels; name = :PY1)
 LP1 = build_neuron(PY1_channels; name = :LP1)
 AB1 = build_neuron(AB1_channels; name = :AB1)
@@ -38,3 +37,6 @@ final_AB1 = structural_simplify(AB1)
 
 probAB1 = ODEProblem(final_AB1, [], (0., 3000.), [])
 
+sol = solve(probAB1, ImplicitEuler(), dt = 0.025)
+
+plot(sol)
