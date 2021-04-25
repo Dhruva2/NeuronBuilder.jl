@@ -1,4 +1,4 @@
-using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq
+using ModelingToolkit, OrdinaryDiffEq
 
 # Membrane ion channels
 AB1_channels = [NaV(100.), CaT(2.5), CaS(6.), Ka(50.), KCa(5.), Kdr(100.), H(0.01), Leak(0.00)]
