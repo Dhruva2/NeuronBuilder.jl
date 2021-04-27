@@ -1,11 +1,11 @@
-abstract type Channel end
-abstract type IonChannel <: Channel end
-abstract type Synapse <: Channel end
+abstract type Conductance end
+abstract type IonChannel <: Conductance end
+abstract type Synapse <: Conductance end
 
 """
 return unparameterised type as symbol
 """
-function get_name(ch::Channel) 
+function get_name(ch::Conductance) 
     Base.typename(ch |> typeof) |> Symbol
 end
 
@@ -65,7 +65,7 @@ h∞(::CaS, V) = 1.0/(1.0+exp((V+60.0)/6.2))
 τm(::CaS, V) = 1.4 + 7.0/(exp((V+27.0)/10.0) + exp((V+70.0)/-13.0));
 τh(::CaS, V) = 60.0 + 150.0/(exp((V+55.0)/9.0) + exp((V+65.0)/-16.0));
 ionic_current(::CaS, sys::ODESystem) = sys.ICaS
-calcium_current(::CaS, sys::ODESystem) = sys.ICaS_Ca
+calcium_current(::CaS, sys::ODESystem) = sys.ICaS
 ECa(::CaS, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log(max((3000.0/Ca), 0.001)))
 # ECa(::CaS, Ca) = 30.
 
@@ -99,7 +99,7 @@ h∞(::CaT, V) = 1.0/(1.0 + exp((V+32.1)/5.5))
 
 
 ionic_current(::CaT, sys::ODESystem) = sys.ICaT
-calcium_current(::CaT, sys::ODESystem) = sys.ICaT_Ca
+calcium_current(::CaT, sys::ODESystem) = sys.ICaT
 ECa(::CaT, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log(max((3000.0/Ca), 0.001)))
 
 function channel_dynamics(ch::CaT, V, Ca, D, t)

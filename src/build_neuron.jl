@@ -22,10 +22,10 @@ function build_channel(syn::Synapse; name = get_name(syn))
 end
 
 
+# 10 nF/mm² for default specific membrane capacitance
+function build_neuron(channels;  capacitance = 10, V_init = -60, Ca_init = 0.05, name = :unidentified_neuron, num_inputs = 0)
 
-function build_neuron(channels;  V_init = -60, Ca_init = 0.05, name = :unidentified_neuron, num_inputs = 0)
-
-    @parameters t 
+    @parameters t cm
     states = @variables V(t) Ca(t)
     syns = [Num(Variable{Symbolics.FnType{Tuple{Any},Real}}(Symbol(:Isyn, i)))(t) for i in 1:num_inputs]
 
@@ -43,8 +43,8 @@ function build_neuron(channels;  V_init = -60, Ca_init = 0.05, name = :unidentif
                     )  
 
     diffeqs =   cat(
-                [D(V) ~ summed_membrane_currents + sum(syns)],
-                [D(Ca) ~ summed_calcium_flux],
+                    [D(V) ~ (summed_membrane_currents + sum(syns))/cm],
+                [D(Ca) ~ (summed_calcium_flux*.0939 - Ca + .05)/200],
                 dims=1)               
 
     eqs = cat(connections, diffeqs; dims=1)
@@ -52,13 +52,11 @@ function build_neuron(channels;  V_init = -60, Ca_init = 0.05, name = :unidentif
 
     all_states = [states..., syns...]
 
-    neur = ODESystem(eqs, t, all_states, []; 
+    neur = ODESystem(eqs, t, all_states, [cm]; 
                     systems = channel_systems,
-                    defaults = [V => V_init, Ca => Ca_init],
+                    defaults = [V => V_init, Ca => Ca_init, cm => capacitance],
                     name = name
                     )
-
-    
 
     return neur
 end
