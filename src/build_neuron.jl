@@ -22,8 +22,8 @@ function build_channel(syn::Synapse; name = get_name(syn))
 end
 
 
-# 0.001 mF/cm² for default specific membrane capacitance
-function build_neuron(channels;  capacitance = 0.001, V_init = -60, Ca_init = 0.05, name = :unidentified_neuron, num_inputs = 0)
+# 10 nF/mm² for default specific membrane capacitance
+function build_neuron(channels;  capacitance = 10, V_init = -60, Ca_init = 0.05, name = :unidentified_neuron, num_inputs = 0)
 
     @parameters t cm
     states = @variables V(t) Ca(t)
@@ -44,7 +44,7 @@ function build_neuron(channels;  capacitance = 0.001, V_init = -60, Ca_init = 0.
 
     diffeqs =   cat(
                     [D(V) ~ (summed_membrane_currents + sum(syns))/cm],
-                [D(Ca) ~ summed_calcium_flux],
+                [D(Ca) ~ (summed_calcium_flux*.0939 - Ca + .05)/200],
                 dims=1)               
 
     eqs = cat(connections, diffeqs; dims=1)
