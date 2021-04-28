@@ -23,11 +23,12 @@ end
 
 
 # 10 nF/mm² for default specific membrane capacitance
-function build_neuron(channels;  capacitance = 10, V_init = -60, Ca_init = 0.05, name = :unidentified_neuron, num_inputs = 0)
+function build_neuron(comp, channels; name = :unidentified_neuron)
 
-    @parameters t cm
-    states = @variables V(t) Ca(t)
-    syns = [Num(Variable{Symbolics.FnType{Tuple{Any},Real}}(Symbol(:Isyn, i)))(t) for i in 1:num_inputs]
+    @variables t 
+    neuron_parameters = @parameters Cₘ τCa Ca∞
+    neuron_states = @variables V(t) Ca(t)
+    syns = [Num(Variable{Symbolics.FnType{Tuple{Any},Real}}(Symbol(:Isyn, i)))(t) for i in 1:comp.hooks]
 
     D = Differential(t)
     channel_systems = build_channel.(channels)
@@ -41,20 +42,35 @@ function build_neuron(channels;  capacitance = 10, V_init = -60, Ca_init = 0.05,
                     [calcium_hook(Ca, ch, chs) for (ch, chs) in zip(channels, channel_systems)], 
                     dims=1
                     )  
-
+    f = 0.094
     diffeqs =   cat(
-                    [D(V) ~ (summed_membrane_currents + sum(syns))/cm],
-                [D(Ca) ~ (summed_calcium_flux*.0939 - Ca + .05)/200],
-                dims=1)               
+                    [D(V) ~ (summed_membrane_currents + sum(syns))/Cₘ],
+                    [D(Ca) ~ (1/τCa)*(-Ca + Ca∞ + f*summed_calcium_flux)],
+                    dims=1
+                    )               
 
     eqs = cat(connections, diffeqs; dims=1)
     eqs = filter(x -> !(x == (Num(0) ~ Num(0))), eqs)
 
-    all_states = [states..., syns...]
-
-    neur = ODESystem(eqs, t; 
+    channel_defs = Dict{SymbolicUtils.Symbolic{Real}, Float64}()
+    for (ch, chs) in zip(channels, channel_systems)
+        param_names = external_params(ch)
+        if !isnothing(param_names)
+            for el in param_names
+                channel_defs[getproperty(chs, el)] = comp.parameters[el]
+            end
+        end
+    end
+    
+    soma_defs = Dict{Num, Float64}()
+    for el in neuron_parameters
+        soma_defs[el] = comp.parameters[ModelingToolkit.tosymbol(el)]
+    end
+    state_defs = Dict(V => comp.initial_states[:V], Ca => comp.initial_states[:Ca])    
+    defaults = merge(soma_defs, channel_defs, state_defs)
+    neur = ODESystem(eqs, t;
                     systems = channel_systems,
-                    defaults = [V => V_init, Ca => Ca_init, cm => capacitance],
+                    defaults = defaults,
                     name = name
                     )
 
