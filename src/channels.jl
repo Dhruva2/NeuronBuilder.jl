@@ -6,7 +6,7 @@ abstract type Synapse <: Conductance end
 return unparameterised type as symbol
 """
 function get_name(ch::Conductance) 
-    Base.typename(ch |> typeof) |> Symbol
+    Base.typename(ch |> typeof).name |> Symbol
 end
 
 """
