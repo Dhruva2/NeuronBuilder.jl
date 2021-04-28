@@ -52,7 +52,7 @@ function build_neuron(channels;  capacitance = 10, V_init = -60, Ca_init = 0.05,
 
     all_states = [states..., syns...]
 
-    neur = ODESystem(eqs, t, all_states, [cm]; 
+    neur = ODESystem(eqs, t; 
                     systems = channel_systems,
                     defaults = [V => V_init, Ca => Ca_init, cm => capacitance],
                     name = name
