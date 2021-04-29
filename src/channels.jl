@@ -40,7 +40,7 @@ h∞(::NaV, V) =  1.0/(1.0+exp((V+48.9)/5.18))
 ionic_current(::NaV, sys::ODESystem) = sys.INa
 external_params(::NaV) = (:ENa,)
 
-function channel_dynamics(ch::NaV, V, Ca, D, t)    
+function channel_dynamics(ch::NaV, V, Ca)
     states = @variables mNa(t) hNa(t) INa(t)
     parameters = @parameters ḡNa ENa 
     eqs = [ D(mNa) ~       (1/τm(ch, V))*(m∞(ch, V) - mNa), 
@@ -71,7 +71,7 @@ calcium_current(::CaS, sys::ODESystem) = sys.ICaS
 ECa(::CaS, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log(max((3000.0/Ca), 0.001)))
 external_params(::CaS) = nothing
 
-function channel_dynamics(ch::CaS, V, Ca, D, t)
+function channel_dynamics(ch::CaS, V, Ca)
     states = @variables mCaS(t) hCaS(t) ICaS(t)
     parameters = @parameters ḡCaS
     eqs = [ D(mCaS) ~       (1/τm(ch, V))*(m∞(ch, V) - mCaS), 
@@ -102,7 +102,7 @@ calcium_current(::CaT, sys::ODESystem) = sys.ICaT
 ECa(::CaT, Ca) = (500.0)*(8.6174e-5)*(283.15)*(log(max((3000.0/Ca), 0.001)))
 external_params(::CaT) = nothing
 
-function channel_dynamics(ch::CaT, V, Ca, D, t)
+function channel_dynamics(ch::CaT, V, Ca)
     states = @variables mCaT(t) hCaT(t) ICaT(t)
     parameters = @parameters ḡCaT
     eqs = [ D(mCaT) ~       (1/τm(ch, V))*(m∞(ch, V) - mCaT), 
@@ -133,7 +133,7 @@ h∞(::Ka, V) = 1.0/(1.0+exp((V+56.9)/4.9))
 ionic_current(::Ka, sys::ODESystem) = sys.IKa
 external_params(::Ka) = (:EK,)
 
-function channel_dynamics(ch::Ka, V, Ca, D, t)    
+function channel_dynamics(ch::Ka, V, Ca)    
     states = @variables mKa(t) hKa(t) IKa(t)
     parameters = @parameters ḡKa EK 
     eqs = [ D(mKa) ~       (1/τm(ch, V))*(m∞(ch, V) - mKa), 
@@ -158,7 +158,7 @@ m∞(::KCa, V, Ca) = (Ca/(Ca+3.0))/(1.0+exp((V+28.3)/-12.6));
 ionic_current(::KCa, sys::ODESystem) = sys.IKCa
 external_params(::KCa) = (:EK,)
 
-function channel_dynamics(ch::KCa, V, Ca, D, t)    
+function channel_dynamics(ch::KCa, V, Ca)    
     states = @variables mKCa(t) IKCa(t)
     parameters = @parameters ḡKCa EK 
     eqs = [ D(mKCa) ~       (1/τm(ch, V))*(m∞(ch, V, Ca) - mKCa), 
@@ -186,7 +186,7 @@ ionic_current(::Kdr, sys::ODESystem) = sys.IKdr
 external_params(::Kdr) = (:EK,)
 
 
-function channel_dynamics(ch::Kdr, V, Ca, D, t)    
+function channel_dynamics(ch::Kdr, V, Ca)    
     states = @variables mKdr(t) IKdr(t)
     parameters = @parameters ḡKdr EK 
     eqs = [ D(mKdr) ~       (1/τm(ch, V))*(m∞(ch, V) - mKdr), 
@@ -212,7 +212,7 @@ m∞(::H, V) = 1.0/(1.0+exp((V+70.0)/6.0))
 ionic_current(::H, sys::ODESystem) = sys.IH
 external_params(::H) = (:EH,)
 
-function channel_dynamics(ch::H, V, Ca, D, t)    
+function channel_dynamics(ch::H, V, Ca)    
     states = @variables mH(t) IH(t)
     parameters = @parameters ḡH EH 
     eqs = [ D(mH) ~       (1/τm(ch, V))*(m∞(ch, V) - mH), 
@@ -234,7 +234,7 @@ end
 ionic_current(::Leak, sys::ODESystem) = sys.ILeak
 external_params(::Leak) = (:ELeak,)
 
-function channel_dynamics(ch::Leak, V, Ca, D, t)    
+function channel_dynamics(ch::Leak, V, Ca)    
     states = @variables ILeak(t)
     parameters = @parameters ḡLeak ELeak 
     eqs = [ILeak ~ ḡLeak*(ELeak - V)]   
