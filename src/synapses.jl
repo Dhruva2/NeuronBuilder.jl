@@ -35,7 +35,7 @@ s̄(syn::Glut, Vpre)  = 1. / (1. + exp((syn.Vth - Vpre)/syn.δ))
 τs(syn::Glut, Vpre) = (1. - s̄(syn, Vpre))/syn.k₋
 ionic_current(::Glut, sys::ODESystem) = sys.IGlut
 
-function channel_dynamics(ch::Chol, Vpre, Vpost, D, t)
+function channel_dynamics(ch::Chol, Vpre, Vpost)
     states = @variables s(t) IChol(t)
     parameters = @parameters ḡChol
     eqs = [ D(s)  ~     (1/τs(ch, Vpre))*(s̄(ch, Vpre) - s),
@@ -45,7 +45,7 @@ function channel_dynamics(ch::Chol, Vpre, Vpost, D, t)
     return eqs, states, parameters, current, defaultmap
 end
 
-function channel_dynamics(ch::Glut, Vpre, Vpost, D, t)
+function channel_dynamics(ch::Glut, Vpre, Vpost)
     states = @variables s(t) IGlut(t)
     parameters = @parameters ḡGlut
     eqs = [ D(s) ~ (1/τs(ch, Vpre))*(s̄(ch, Vpre) - s),
