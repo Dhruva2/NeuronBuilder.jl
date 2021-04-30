@@ -2,7 +2,7 @@ module NeuronBuilder
 
 using ModelingToolkit 
 
-@parameters t
+const t = Num(Sym{Real}(:t))
 const D = Differential(t)
 
 include("channels.jl")
