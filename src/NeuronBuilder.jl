@@ -15,7 +15,7 @@ export build_channel, build_synapse, build_neuron, build_group
 export add_connection
 
 include("assets/Liu/Liu.jl")
-
+include("assets/Prinz/Prinz.jl")
 
 
 end
