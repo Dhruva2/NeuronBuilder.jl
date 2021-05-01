@@ -1,11 +1,12 @@
 module Liu
 
 using ModelingToolkit
-include("../../channel_types.jl")
+#include("../../channel_types.jl")
 
-#import ..NeuronBuilder
+using ...NeuronBuilder
 include("channels.jl")
 
+export channel_dynamics
 
 
 end

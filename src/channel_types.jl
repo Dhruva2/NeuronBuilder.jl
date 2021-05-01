@@ -21,3 +21,4 @@ does the channel have a reversal
 """
 get_reversal(c::Conductance) = nothing
 #################### Channels ###############################
+
