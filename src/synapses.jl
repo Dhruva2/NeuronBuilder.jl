@@ -6,7 +6,6 @@ my_pre(::Synapse, sys::ODESystem) = sys.Vpre
 my_post(::Synapse, sys::ODESystem) = sys.Vpost
 post_connector(::Synapse) = :Isyn
 
-
 mutable struct Chol{T} <: Synapse
     ḡChol::T
     s::T

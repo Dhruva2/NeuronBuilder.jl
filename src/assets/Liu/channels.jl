@@ -1,3 +1,4 @@
+
 #################### NaV ###############################
 mutable struct NaV{S,T} <: IonChannel
     ḡNa::S
