@@ -1,10 +1,13 @@
 module Prinz
 
 using ModelingToolkit
-include("../../channel_types.jl")
+using ..NeuronBuilder
+
+import ..channel_dynamics, ..ionic_current, ..calcium_current, ..external_params
 
 include("channels.jl")
 
-
+export channel_dynamics, ionic_current, calcium_current, external_params
 
 end
+

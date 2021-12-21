@@ -1,30 +1,33 @@
 module NeuronBuilder
 
-using ModelingToolkit 
+using ModelingToolkit
 
 const t = Num(Sym{Real}(:t))
 const D = Differential(t)
+export t, D
 
 include("channel_types.jl")
-include("liu_channels.jl")
-include("prinz_channels.jl")
+export Synapse, IonChannel, Soma, Compartment, ComponentSystem
 
+function channel_dynamics() end
+function ionic_current() end
+function calcium_current() end
+function external_params() end
 
+include("assets/Liu/Liu.jl")
+using .Liu
+export Liu
+
+include("assets/Prinz/Prinz.jl")
+using .Prinz
+export Prinz
 
 include("synapses.jl")
+include("helper_functions.jl")
 include("build_neuron.jl")
-include("compartments.jl")
 
+export channel_dynamics
 
-
-export Synapse, IonChannel, Conductance, Soma, Compartment
-export build_channel, build_synapse, build_neuron, build_group
-export add_connection
-export Liu_NaV, Liu_CaS, Liu_CaT, Liu_H, Liu_Ka, Liu_KCa, Liu_Leak, Liu_Kdr
-export Prinz_NaV, Prinz_CaS, Prinz_CaT, Prinz_H, Prinz_Ka, Prinz_KCa, Prinz_Leak, Prinz_Kdr
-
-# include("assets/Liu/Liu.jl")
-# include("assets/Prinz/Prinz.jl")
-
+export build_channel, build_neuron, build_group, add_connection
 
 end

@@ -1,32 +1,27 @@
 using NeuronBuilder, OrdinaryDiffEq, ModelingToolkit
-using Plots; plotlyjs()
+using Plots
+using NeuronBuilder.Prinz
 
-ics = Dict(:V => -60., :Ca => 0.05)
-reversals = Dict(:ENa => 50., :EH =>-20., :EK =>-80., :ELeak =>-50.)
-params = Dict(:Cₘ => 10., :τCa => 200., :Ca∞ => 0.05)
+ics = Dict(:V => -60.0, :Ca => 0.05)
+reversals = Dict(:ENa => 50.0, :EH => -20.0, :EK => -80.0, :ELeak => -50.0)
+params = Dict(:Cₘ => 10.0, :τCa => 200.0, :Ca∞ => 0.05, :Ca_tgt => 50.0, :τg => 1.0e6)
 comp = Soma(ics, merge(reversals, params), 0)
 
 
-
 # ## xolotl versions divided by 10
-# AB1_channels = [NaV(100.), CaS(6.), CaT(2.5), H(0.01), Ka(50.), KCa(5.), Kdr(100.), Leak(0.)]
+AB1_channels = [Prinz.NaV(1000.0), Prinz.CaS(60.0), Prinz.CaT(25.0), Prinz.H(0.1), Prinz.Ka(500.0), Prinz.KCa(50.0), Prinz.Kdr(1000.0), Prinz.Leak(0.0)]
 
-# LP1_channels = [NaV(100.), CaS(4.), CaT(0.), H(0.05), Ka(20.), KCa(0.), Kdr(25.), Leak(0.03)]
+#LP_channels = [Prinz.NaV(1000.), Prinz.CaS(40.), Prinz.CaT(0.), Prinz.H(0.5), Prinz.Ka(200.), Prinz.KCa(0.), Prinz.Kdr(250.), Prinz.Leak(0.3)]
 
-# PY1_channels = [NaV(100.), CaS(2.), CaT(2.4), H(0.05), Ka(50.), KCa(0.), Kdr(125.), Leak(0.01)]
+#PY1_channels = [Prinz.NaV(100.0), Prinz.CaS(2.0), Prinz.CaT(2.4), Prinz.H(0.05), Prinz.Ka(50.0),Prinz.KCa(0.0), Prinz.Kdr(125.0), Prinz.Leak(0.01)]
 
+#PY1 = build_neuron(comp, PY1_channels, false; name = :PY1)
+#LP = build_neuron(comp, LP1_channels, false; name = :LP1)
+AB = build_neuron(comp, AB1_channels, false; name = :AB1)
 
-## parameters from O'Leary
-AB1_channels = [Liu_NaV(1831.), Liu_CaS(27.), Liu_CaT(23.), Liu_H(10.1), Liu_Ka(246.), Liu_KCa(980.), Liu_Kdr(610.), Liu_Leak(0.99)]
-
-
-#PY1 = build_neuron(PY1_channels; name = :PY1)
-#LP1 = build_neuron(PY1_channels; name = :LP1)
-AB1 = build_neuron(comp, AB1_channels; name = :AB1)
-
-final_AB1 = structural_simplify(AB1)
-probAB1 = ODEProblem(final_AB1, [], (0., 3000.), [])
+final_AB = structural_simplify(AB)
+probAB = ODEProblem(final_AB, [], (0.0, 3000.0), [])
 
 #sol = solve(probAB1, ImplicitEuler(), dt = 0.025)
-sol = solve(probAB1, AutoTsit5(TRBDF2()))
+sol = solve(probAB, AutoTsit5(TRBDF2()))
 plot(sol)

@@ -6,7 +6,6 @@ my_pre(::Synapse, sys::ODESystem) = sys.Vpre
 my_post(::Synapse, sys::ODESystem) = sys.Vpost
 post_connector(::Synapse) = :Isyn
 
-
 mutable struct Chol{T} <: Synapse
     ḡChol::T
     s::T
@@ -15,11 +14,11 @@ mutable struct Chol{T} <: Synapse
     Vth::T # mV
     δ::T   # mV
 end
-Chol(x) = Chol(x,0.,-80., 0.01, -35., 5.)
+
+Chol(x) = Chol(x, 0., -80., 0.01, -35., 5.)
 s̄(syn::Chol, Vpre)  = 1. / (1. + exp((syn.Vth - Vpre)/syn.δ))
 τs(syn::Chol, Vpre) = (1. - s̄(syn, Vpre))/syn.k₋
-ionic_current(::Chol, sys::ODESystem) = sys.IChol
-
+syn_current(::Chol, sys::ODESystem) = sys.IChol
 
 
 mutable struct Glut{T} <: Synapse
@@ -30,10 +29,12 @@ mutable struct Glut{T} <: Synapse
     Vth::T 
     δ::T  
 end
-Glut(x) = Glut(x,0.,-70., 0.025, -35., 5.)
+
+Glut(x) = Glut(x, 0., -70., 0.025, -35., 5.)
 s̄(syn::Glut, Vpre)  = 1. / (1. + exp((syn.Vth - Vpre)/syn.δ))
 τs(syn::Glut, Vpre) = (1. - s̄(syn, Vpre))/syn.k₋
-ionic_current(::Glut, sys::ODESystem) = sys.IGlut
+syn_current(::Glut, sys::ODESystem) = sys.IGlut
+
 
 function channel_dynamics(ch::Chol, Vpre, Vpost)
     states = @variables s(t) IChol(t)

@@ -1,24 +1,20 @@
-abstract type Conductance end
-abstract type IonChannel <: Conductance end
-abstract type Synapse <: Conductance end
+abstract type Component end
 
-"""
-return unparameterised type as symbol
-"""
-function get_name(ch::Conductance) 
-    Base.typename(ch |> typeof).name |> Symbol
+abstract type IonChannel <: Component end
+
+abstract type Synapse <: Component end
+
+abstract type Compartment <: Component end
+
+struct Soma <: Compartment
+    initial_states::Dict{Symbol,Float64}
+    parameters::Dict{Symbol,Float64}
+    hooks::Int64
 end
 
-"""
-fallback option for channels without a calcium current
-"""
-calcium_current(ch::IonChannel, sys::ODESystem) = Num(0)
-voltage_hook(V, ch::IonChannel, sys::ODESystem) = V ~ sys.V 
-calcium_hook(Ca, ch::IonChannel, sys::ODESystem) = Ca ~ sys.Ca
+struct ComponentSystem
+    c::Component
+    sys::ODESystem
+end
 
-"""
-does the channel have a reversal
-"""
-get_reversal(c::Conductance) = nothing
-#################### Channels ###############################
 
