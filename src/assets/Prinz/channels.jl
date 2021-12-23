@@ -11,7 +11,7 @@ ionic_current(::NaV, sys::ODESystem) = sys.INa
 external_params(::NaV) = (:ENa,)
 m∞(::NaV, V) = 1.0 / (1.0 + exp((V + 25.5) / -5.29))
 h∞(::NaV, V) = 1.0 / (1.0 + exp((V + 48.9) / 5.18))
-τm(::NaV, V) = 1.32 - 1.26 / (1 + exp((V + 120.0) / -25.0))
+τm(::NaV, V) = 2.64 - 2.52 / (1 + exp((V + 120.0) / -25.0))
 τh(::NaV, V) = (1.34 / (1.0 + exp((V + 62.9) / -10.0))) * (1.5 + 1.0 / (1.0 + exp((V + 34.9) / 3.6)))
 
 function channel_dynamics(ch::NaV, V, Ca)

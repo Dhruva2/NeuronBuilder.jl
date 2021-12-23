@@ -1,7 +1,8 @@
 # NeuronBuilder
 
-This is a quick package for building small networks of detailed, conductance-based neurons out of ion channels and synapses. The idea is that it's easy to use this template and add your own ion channels /synapses , with your choice of dynamics. 
+This is a quick package for building small networks of detailed, conductance-based neurons out of ion channels and synapses. The idea is that it's easy to use this template and add your own ion channels /synapses, with your choice of dynamics. 
 
+If you want a more flexible platform to build neuron models from basic components you should check out the more comprehensive package [Conductor.jl](https://github.com/wsphillips/Conductor.jl). 
 
 
 # Installation and Usage
@@ -14,6 +15,7 @@ This is a quick package for building small networks of detailed, conductance-bas
 
 ## Running individual neurons
 
+- Type `using NeuronBuilder.Liu` or `NeuronBuilder.Prinz` in your scripts to use either of the set of channels from those two modules.
 - Run `include("individual_STG_neurons.jl")` which will make your neurons
 - Solve some neuron using ` sol = solve(probAB1, Rodas5())`
 - You can convert the solution to an array using `A = Array(sol)` and plot it using `Plots.plot(sol.t,A[1,:])`

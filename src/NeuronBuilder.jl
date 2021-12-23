@@ -29,5 +29,6 @@ include("build_neuron.jl")
 export channel_dynamics
 
 export build_channel, build_neuron, build_group, add_connection
+export Chol, Glut
 
 end

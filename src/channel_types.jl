@@ -6,7 +6,7 @@ abstract type Synapse <: Component end
 
 abstract type Compartment <: Component end
 
-struct Soma <: Compartment
+mutable struct Soma <: Compartment
     initial_states::Dict{Symbol,Float64}
     parameters::Dict{Symbol,Float64}
     hooks::Int64

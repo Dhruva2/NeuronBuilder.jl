@@ -6,7 +6,7 @@ getR(ch) = getfield(ch, fieldnames(typeof(ch))[2])
 """
 return unparameterised type as symbol
 """
-function get_name(ch::IonChannel) 
+function get_name(ch::Component) 
     Base.typename(ch |> typeof).name |> Symbol
 end
 
