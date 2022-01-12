@@ -24,6 +24,7 @@ export Prinz
 
 include("synapses.jl")
 include("helper_functions.jl")
+include("regulation.jl")
 include("build_neuron.jl")
 
 export channel_dynamics
