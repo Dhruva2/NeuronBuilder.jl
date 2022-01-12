@@ -6,19 +6,19 @@ function (ch::IonChannel)()
     return ComponentSystem(ch,sys)
 end
 
-function (ch::IonChannel)(reg::Bool)
+function (ch::IonChannel)(reg::Bool, Ca_tgt, τg)
     if isLeak(ch) || (reg == false)
         ch()
-    else
+    elseif (reg == true)
         @variables V(t) Ca(t)
-        eqs, states, parameters1, current, defaultmap = channel_dynamics(ch, V, Ca)
-        sys = ODESystem(eqs, t, [V, states...], [parameters1...];
+        eqs, states, parameters, current, defaultmap = channel_dynamics(ch, V, Ca)
+        sys = ODESystem(eqs, t, [V, states...], [parameters...];
             observed = current, defaults = defaultmap, name = get_name(ch))
-    
-        eqs, states, parameters, defaultmap = regul_dyn(ch, Ca)
+        @parameters Ca_tgt, τg
+        eqs, states, parameters, defaultmap = regul_dyn(ch, Ca, Ca_tgt, τg)
         @named regul_sys = ODESystem(eqs, t, [Ca, states...], parameters, defaults = defaultmap)
         sys = extend(sys, regul_sys)
-        push!(equations(sys), parameters1[1] ~ regul_sys.states[2]) #instead of a parameter, g is a state now
+    
         return ComponentSystem(ch, sys)
     end
 end
@@ -39,7 +39,7 @@ function build_neuron(comp, channels; reg::Bool = false, name = :unidentified_ne
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:comp.hooks]]
     my_sum(syns) = comp.hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
 
-    channel_systems = [ch(reg) for ch in channels]
+    channel_systems = [ch(reg, Ca_tgt, τg) for ch in channels]
 
     summed_membrane_currents = sum(ionic_current(ch, cs.sys) for (ch, cs) in zip(channels, channel_systems))
 
