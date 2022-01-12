@@ -7,14 +7,20 @@ function (ch::IonChannel)()
 end
 
 function (ch::IonChannel)(reg::Bool)
-    cs = ch()
-    sys = cs.sys
-    if reg && typeof(ch) != Leak{Float64}
-        regul_sys = regul_dyn(ch, sys.Ca)
+    if isLeak(ch) || (reg == false)
+        ch()
+    else
+        @variables V(t) Ca(t)
+        eqs, states, parameters1, current, defaultmap = channel_dynamics(ch, V, Ca)
+        sys = ODESystem(eqs, t, [V, states...], [parameters1...];
+            observed = current, defaults = defaultmap, name = get_name(ch))
+    
+        eqs, states, parameters, defaultmap = regul_dyn(ch, Ca)
+        @named regul_sys = ODESystem(eqs, t, [Ca, states...], parameters, defaults = defaultmap)
         sys = extend(sys, regul_sys)
-        push!(equations(sys), sys.parameters[1] ~ regul_sys.states[1])
+        push!(equations(sys), parameters1[1] ~ regul_sys.states[2]) #instead of a parameter, g is a state now
+        return ComponentSystem(ch, sys)
     end
-    return ComponentSystem(ch, sys)
 end
 
 function build_channel(syn::Synapse; name = get_name(syn))
@@ -26,15 +32,14 @@ function build_channel(syn::Synapse; name = get_name(syn))
 end
 
 
-# 10 nF/mm² for default specific membrane capacitance
 function build_neuron(comp, channels; reg::Bool = false, name = :unidentified_neuron)
 
-    neuron_parameters = @parameters Cₘ τCa Ca∞ Ca_tgt τg
+    neuron_parameters = @parameters Cₘ τCa Ca∞ Ca_tgt τg Iapp
     neuron_states = @variables V(t) Ca(t)
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:comp.hooks]]
     my_sum(syns) = comp.hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
 
-    channel_systems = [ch() for ch in channels]
+    channel_systems = [ch(reg) for ch in channels]
 
     summed_membrane_currents = sum(ionic_current(ch, cs.sys) for (ch, cs) in zip(channels, channel_systems))
 
@@ -45,10 +50,10 @@ function build_neuron(comp, channels; reg::Bool = false, name = :unidentified_ne
         [calcium_hook(Ca, cs) for cs in channel_systems],
         dims = 1
     )
-    f = 0.094
+    f = 0.94
     diffeqs = cat(
-        [D(V) ~ (summed_membrane_currents + my_sum(syns)) / Cₘ],
-        [D(Ca) ~ (1 / τCa) * (-Ca + Ca∞ + f * summed_calcium_flux)],
+        [D(V) ~ (summed_membrane_currents + my_sum(syns) + Iapp) / Cₘ],
+        [D(Ca) ~ (1 / τCa) * (-Ca + Ca∞ + (f * summed_calcium_flux))], #ionic currents are already carrying negative sign
         dims = 1
     )
 
@@ -60,7 +65,7 @@ function build_neuron(comp, channels; reg::Bool = false, name = :unidentified_ne
         param_names = external_params(cs.c)
         if !isnothing(param_names)
             for el in param_names
-                channel_defs[getproperty(cs.sys,el)] = comp.parameters[el]
+                channel_defs[getproperty(cs.sys, el)] = comp.parameters[el]
             end
         end
     end
