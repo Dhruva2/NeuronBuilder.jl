@@ -1,6 +1,7 @@
 abstract type Component end
 
 abstract type IonChannel <: Component end
+abstract type RegIonChannel <: Component end
 
 abstract type Synapse <: Component end
 
