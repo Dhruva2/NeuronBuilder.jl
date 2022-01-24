@@ -2,6 +2,12 @@ abstract type Component end
 
 abstract type IonChannel <: Component end
 abstract type RegIonChannel <: Component end
+struct RegIon{T} <: RegIonChannel
+    ionch::IonChannel
+    Rion::T
+    τion::Symbol
+end
+
 
 abstract type Synapse <: Component end
 

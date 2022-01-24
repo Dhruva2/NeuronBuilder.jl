@@ -7,7 +7,10 @@ const D = Differential(t)
 export t, D
 
 include("channel_types.jl")
-export Synapse, IonChannel, Soma, Compartment, ComponentSystem
+export Synapse, IonChannel, RegIonChannel, RegIon, Soma, Compartment, Component, ComponentSystem
+
+include("helper_functions.jl")
+export get_name, get_g
 
 function channel_dynamics() end
 function ionic_current() end
@@ -23,7 +26,6 @@ using .Prinz
 export Prinz
 
 include("synapses.jl")
-include("helper_functions.jl")
 include("regulation.jl")
 include("build_neuron.jl")
 

@@ -1,7 +1,7 @@
 ######### helper functions ###########
 
-getg(ch) = getfield(ch, fieldnames(typeof(ch))[1])
-getR(ch) = getfield(ch, fieldnames(typeof(ch))[2])
+get_g(ch::IonChannel) = fieldnames(typeof(ch))[1]
+get_R(ch::RegIonChannel) = fieldnames(typeof(ch))[2]
 
 """
 return unparameterised type as symbol

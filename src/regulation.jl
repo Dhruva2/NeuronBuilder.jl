@@ -17,17 +17,16 @@ regul_dyn(::Zerodominant, xs, Ca) = regul_indep(xs, Ca)
 regul_dyn(::Onedominant, xs, Ca) = regul_network(xs, Ca)
 
 function regul_indep(ch::RegIonChannel, Ca)
-    g = fieldnames(typeof(ch.ionch))[1]
-    R = fieldnames(typeof(ch.ionch))[2]
-    τ_ch = external_params(ch.ionch)[2]
+    g = get_g(ch.ionch)
+    R = Symbol(:R,get_name(ch.ionch))
+    τ_ch = ch.τion
     parameters = @parameters $τ_ch Ca_tgt τg
     states = @variables $g(t) $R(t)
     conductance, mRna = states[1], states[2]
     τch = parameters[1]
     eqs = [D(mRna) ~ (Ca_tgt - Ca) / τch,
         D(conductance) ~ (mRna - conductance) / τg]
-    #observed = g ?
-    defaultmap = [conductance => getg(ch.ionch), mRna => getR(ch.ionch)]
+    defaultmap = [conductance => getfield(ch.ionch,get_g(ch.ionch)), mRna => ch.Rion]
     return eqs, states, parameters, defaultmap
 end
 

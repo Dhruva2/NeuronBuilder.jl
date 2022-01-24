@@ -3,7 +3,7 @@ function (ch::IonChannel)()
     eqs, states, parameters, current, defaultmap = channel_dynamics(ch, V, Ca)
     sys = ODESystem(eqs, t, [V, Ca, states...], [parameters...];
         observed = current, defaults = defaultmap, name = get_name(ch))
-    return ComponentSystem(ch,sys)
+    return ComponentSystem(ch, sys)
 end
 
 function (ch::RegIonChannel)()
@@ -11,14 +11,21 @@ function (ch::RegIonChannel)()
     eqs, states, parameters, current, defaultmap = channel_dynamics(ch.ionch, V, Ca)
     sys = ODESystem(eqs, t, [V, states...], [parameters...];
         observed = current, defaults = defaultmap, name = get_name(ch.ionch))
+    RHS = current[1].rhs
+    LHS = current[1].lhs
+    curr_idx = findfirst(x -> x == current[1], equations(sys))
 
     eqs, states, parameters, defaultmap = regul_dyn(ch, Ca)
     @named regul_sys = ODESystem(eqs, t, [Ca, states...], [parameters...]; defaults = defaultmap)
-    sys = extend(sys, regul_sys)
+
+    gstate = regul_sys.states[2]
+    gparam = sys.ps[1]
+    equations(sys)[curr_idx] = LHS ~ gstate / gparam * RHS #take g(t) in current eq.
+    sys = alias_elimination(extend(sys, regul_sys))
     return ComponentSystem(ch.ionch, sys)
 end
 
-function (ch::Synapse)(; name = get_name(syn))
+function (syn::Synapse)(; name = get_name(syn))
     @variables Vpre(t) Vpost(t)
     eqs, states, parameters, current, defaultmap = channel_dynamics(syn, Vpre, Vpost)
     sys = ODESystem(eqs, t, [Vpre, Vpost, states...], [parameters...]; observed = current,
@@ -27,13 +34,16 @@ function (ch::Synapse)(; name = get_name(syn))
 end
 
 
-function build_neuron(comp, channels; name = :unidentified_neuron)
+function build_neuron(comp, channels; name = :unidentified_neuron, reg = false)
 
     neuron_parameters = @parameters Cₘ τCa Ca∞ Iapp
     neuron_states = @variables V(t) Ca(t)
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:comp.hooks]]
     my_sum(syns) = comp.hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
 
+    if reg
+        channels = [isLeak(ch) ? ch : RegIon(ch, getfield(ch, get_g(ch)), Symbol(:τ, get_name(ch))) for ch in channels]
+    end
     channel_systems = [ch() for ch in channels]
 
     summed_membrane_currents = sum(ionic_current(cs.c, cs.sys) for cs in channel_systems)
@@ -59,7 +69,7 @@ function build_neuron(comp, channels; name = :unidentified_neuron)
     for cs in channel_systems
         param_names = filter(x -> x !== nothing, external_params(cs.c))
         for el in param_names
-            if haskey(comp.parameters, el) && hasproperty(cs.sys,el)
+            if haskey(comp.parameters, el) && hasproperty(cs.sys, el)
                 channel_defs[getproperty(cs.sys, el)] = comp.parameters[el]
             end
         end
