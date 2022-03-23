@@ -1,21 +1,20 @@
-#################### NaV ###############################
 
-mutable struct NaV{S,T} <: IonChannel
-    gNa::S #can be a scalar or a variable
-    RNa::S #if unregulated then this is 0.0
-    mNa::T
-    hNa::T
+#################### NaV ###############################
+struct Na{ F<:AbstractFloat} <: IonChannel 
+    gNa::F  
+    mNa::F
+    hNa::F
 end
 
-NaV(x) = NaV(x, x, 0.0, 0.0) #if regulated, R is initialized with the same value as g
-ionic_current(::NaV, sys::ODESystem) = sys.INa
-external_params(::NaV) = (:ENa,)# :τNa)
-m∞(::NaV, V) = 1.0 / (1.0 + exp((V + 25.5) / -5.29))
-h∞(::NaV, V) = 1.0 / (1.0 + exp((V + 48.9) / 5.18))
-τm(::NaV, V) = 1.32 - 1.26 / (1 + exp((V + 120.0) / -25.0))
-τh(::NaV, V) = (0.67 / (1.0 + exp((V + 62.9) / -10.0))) * (1.5 + 1.0 / (1.0 + exp((V + 34.9) / 3.6)))
+Na(x) = Na(x, 0.0, 0.0)
+ionic_current(::Na, sys::ODESystem) = sys.INa
+external_params(::Na) = (:ENa, :τNa)
+m∞(::Na, V) = 1.0 / (1.0 + exp((V + 25.5) / -5.29))
+h∞(::Na, V) = 1.0 / (1.0 + exp((V + 48.9) / 5.18))
+τm(::Na, V) = 1.32 - 1.26 / (1 + exp((V + 120.0) / -25.0))
+τh(::Na, V) = (0.67 / (1.0 + exp((V + 62.9) / -10.0))) * (1.5 + 1.0 / (1.0 + exp((V + 34.9) / 3.6)))
 
-function channel_dynamics(ch::NaV, V, Ca)
+function channel_dynamics(ch::Na, V, Ca)
     states = @variables mNa(t) hNa(t) INa(t)
     parameters = @parameters gNa ENa
     eqs = [D(mNa) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mNa),
@@ -28,17 +27,15 @@ end
 
 #################### Slow calcium current #############################
 
-mutable struct CaS{S,T} <: IonChannel
-    gCaS::S
-    RCaS::S
-    mCaS::T
-    hCaS::T
+struct CaS{ F<:AbstractFloat} <: IonChannel
+    gCaS::F
+    mCaS::F
+    hCaS::F
 end
 
-CaS(x) = CaS(x, x, 20.0, 0.0)
-CaS(x, y) = CaS(x, x, y, 0.0)
-ECa(::CaS, Ca) = (500.0) * (8.6174e-5) * (283.15) * (log(max((3000.0 / Ca), 0.001)))
-external_params(::CaS) = nothing #(:τCaS)
+CaS(x) = CaS(x, 20.0, 0.0) 
+ECa(::CaS, Ca) = (500.0) * (8.6174e-5) * (283.15) * (log(max((3000.0 / Ca), 0.001))) #same as conductor 
+external_params(::CaS) = (:τCaS,)
 ionic_current(::CaS, sys::ODESystem) = sys.ICaS
 calcium_current(::CaS, sys::ODESystem) = sys.ICaS
 m∞(::CaS, V) = 1.0 / (1.0 + exp((V + 33.0) / -8.1))
@@ -59,18 +56,17 @@ end
 
 #################### Transient calcium current ######################
 
-mutable struct CaT{S,T} <: IonChannel
-    gCaT::S
-    RCaT::S
-    mCaT::T
-    hCaT::T
+struct CaT{ F<:AbstractFloat} <: IonChannel
+    gCaT::F
+    mCaT::F
+    hCaT::F
 end
 
-CaT(x) = CaT(x, x, 0.0, 0.0)
+CaT(x) = CaT(x, 0.0, 0.0) 
 ionic_current(::CaT, sys::ODESystem) = sys.ICaT
 calcium_current(::CaT, sys::ODESystem) = sys.ICaT
 ECa(::CaT, Ca) = (500.0) * (8.6174e-5) * (283.15) * (log(max((3000.0 / Ca), 0.001)))
-external_params(::CaT) = nothing #(:τCaT)
+external_params(::CaT) = (:τCaT,)
 m∞(::CaT, V) = 1.0 / (1.0 + exp((V + 27.1) / -7.2))
 h∞(::CaT, V) = 1.0 / (1.0 + exp((V + 32.1) / 5.5))
 τm(::CaT, V) = 21.7 - 21.3 / (1.0 + exp((V + 68.1) / -20.5));
@@ -89,16 +85,15 @@ end
 
 #################### A-type potassium current #########################
 
-mutable struct Ka{S,T} <: IonChannel
-    gKa::S #can be a scalar or a variable
-    RKa::S #if unregulated then this is 0.0
-    mKa::T
-    hKa::T
+struct Ka{ F<:AbstractFloat} <: IonChannel
+    gKa::F
+    mKa::F
+    hKa::F
 end
 
-Ka(x) = Ka(x, x, 0.0, 0.0)
+Ka(x) = Ka(x, 0.0, 0.0) 
 ionic_current(::Ka, sys::ODESystem) = sys.IKa
-external_params(::Ka) = (:EK,)#  :τKa)
+external_params(::Ka) = (:EK, :τKa)
 m∞(::Ka, V) = 1.0 / (1.0 + exp((V + 27.2) / -8.7))
 h∞(::Ka, V) = 1.0 / (1.0 + exp((V + 56.9) / 4.9))
 τm(::Ka, V) = 11.6 - 10.4 / (1.0 + exp((V + 32.9) / -15.2))
@@ -117,15 +112,14 @@ end
 
 ################### Calcium-activated potassium current ########
 
-mutable struct KCa{S,T} <: IonChannel
-    gKCa::S
-    RKCa::S
-    mKCa::T
+struct KCa{ F<:AbstractFloat} <: IonChannel
+    gKCa::F
+    mKCa::F
 end
 
-KCa(x) = KCa(x, x, 0.0)
+KCa(x) = KCa(x, 0.0) 
 ionic_current(::KCa, sys::ODESystem) = sys.IKCa
-external_params(::KCa) = (:EK,)# :τKCa)
+external_params(::KCa) = (:EK, :τKCa)
 m∞(::KCa, V, Ca) = (Ca / (Ca + 3.0)) / (1.0 + exp((V + 28.3) / -12.6));
 τm(::KCa, V) = 90.3 - 75.1 / (1.0 + exp((V + 46.0) / -22.7));
 
@@ -140,15 +134,14 @@ function channel_dynamics(ch::KCa, V, Ca)
 end
 
 #################### Delayed rectifier potassium current ######################
-mutable struct Kdr{S,T} <: IonChannel
-    gKdr::S
-    RKdr::S
-    mKdr::T
+struct Kdr{ F<:AbstractFloat} <: IonChannel
+    gKdr::T
+    mKdr::F
 end
 
-Kdr(x) = Kdr(x, x, 0.0)
+Kdr(x) = Kdr(x, 0.0) 
 ionic_current(::Kdr, sys::ODESystem) = sys.IKdr
-external_params(::Kdr) = (:EK,)# :τKdr)
+external_params(::Kdr) = (:EK, :τKdr)
 m∞(::Kdr, V) = 1.0 / (1.0 + exp((V + 12.3) / -11.8));
 τm(::Kdr, V) = 7.2 - 6.4 / (1.0 + exp((V + 28.3) / -19.2));
 
@@ -164,15 +157,14 @@ end
 
 #################### H current ####################
 
-mutable struct H{S,T} <: IonChannel
-    gH::S
-    RH::S
-    mH::T
+struct H{ F<:AbstractFloat} <: IonChannel
+    gH::F
+    mH::F
 end
 
-H(x) = H(x, x, 0.0)
+H(x) = H(x, 0.0) 
 ionic_current(::H, sys::ODESystem) = sys.IH
-external_params(::H) = (:EH,)# :τH)
+external_params(::H) = (:EH, :τH)
 m∞(::H, V) = 1.0 / (1.0 + exp((V + 70.0) / 6.0))
 τm(::H, V) = (272.0 + 1499.0 / (1.0 + exp((V + 42.2) / -8.73)))
 
@@ -186,11 +178,10 @@ function channel_dynamics(ch::H, V, Ca)
     return eqs, states, parameters, current, defaultmap
 end
 
-
 #################### Leak current #########################
 
-mutable struct Leak{Float64} <: IonChannel
-    gLeak::Float64
+struct Leak{F<:AbstractFloat} <: IonChannel
+    gLeak::F
 end
 
 ionic_current(::Leak, sys::ODESystem) = sys.ILeak

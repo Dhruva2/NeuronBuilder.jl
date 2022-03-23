@@ -6,7 +6,7 @@ my_pre(syn_sys::ComponentSystem) = syn_sys.sys.Vpre
 my_post(syn_sys::ComponentSystem) = syn_sys.sys.Vpost
 post_connector(::Synapse) = :Isyn
 
-mutable struct Chol{T} <: Synapse
+mutable struct Chol{T<:AbstractFloat} <: Synapse
     ḡChol::T
     s::T
     Eₛ::T # mV
@@ -21,7 +21,7 @@ s̄(syn::Chol, Vpre) = 1.0 / (1.0 + exp((syn.Vth - Vpre) / syn.δ))
 syn_current(::Chol, sys::ODESystem) = sys.IChol
 
 
-mutable struct Glut{T} <: Synapse
+mutable struct Glut{T<:AbstractFloat} <: Synapse
     ḡGlut::T
     s::T
     Eₛ::T

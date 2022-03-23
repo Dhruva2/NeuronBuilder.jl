@@ -1,54 +1,62 @@
 function (ch::IonChannel)()
     @variables V(t) Ca(t)
     eqs, states, parameters, current, defaultmap = channel_dynamics(ch, V, Ca)
-    sys = ODESystem(eqs, t, [V, Ca, states...], [parameters...];
-        observed = current, defaults = defaultmap, name = get_name(ch))
-    return ComponentSystem(ch,sys)
-end
-
-function (ch::IonChannel)(reg::Bool)
-    cs = ch()
-    sys = cs.sys
-    if reg && typeof(ch) != Leak{Float64}
-        regul_sys = regul_dyn(ch, sys.Ca)
-        sys = extend(sys, regul_sys)
-        push!(equations(sys), sys.parameters[1] ~ regul_sys.states[1])
-    end
+    sys = ODESystem(eqs, t, [V, Ca, states...], [parameters...]; observed = current,
+        defaults = defaultmap, name = get_name(ch))
     return ComponentSystem(ch, sys)
 end
 
-function build_channel(syn::Synapse; name = get_name(syn))
+function (ch::RegIonChannel)()
+    @variables V(t) Ca(t)
+    eqs, states, parameters, current, defaultmap = channel_dynamics(ch.ionch, V, Ca)
+    sys = ODESystem(eqs, t, [V, states...], [parameters...]; observed=current,
+        defaults=defaultmap, name=get_name(ch.ionch))
+    gparam = getproperty(sys, get_g(ch.ionch); namespace=false)
+    RHS = current[1].rhs
+    LHS = current[1].lhs
+    curr_idx = findfirst(x -> x == current[1], equations(sys))
+
+    eqs, states, parameters, defaultmap = regul_dyn(ch, Ca)
+    gstate = states[1]
+    @named regul_sys = ODESystem(eqs, t, [Ca, states...], [parameters...]; defaults=defaultmap)
+
+    equations(sys)[curr_idx] = LHS ~ gstate / gparam * RHS #take g(t) in current eq.
+    sys = alias_elimination(extend(sys, regul_sys))
+    return ComponentSystem(ch, sys)
+end
+
+function (syn::Synapse)(; name=get_name(syn))
     @variables Vpre(t) Vpost(t)
     eqs, states, parameters, current, defaultmap = channel_dynamics(syn, Vpre, Vpost)
-    sys = ODESystem(eqs, t, [Vpre, Vpost, states...], [parameters...]; observed = current,
-        name = name, defaults = defaultmap)
-    return ComponentSystem(syn,sys)
+    sys = ODESystem(eqs, t, [Vpre, Vpost, states...], [parameters...]; observed=current,
+        name=name, defaults=defaultmap)
+    return ComponentSystem(syn, sys)
 end
 
 
-# 10 nF/mm² for default specific membrane capacitance
-function build_neuron(comp, channels; reg::Bool = false, name = :unidentified_neuron)
+function build_neuron(comp, channels; name = :unidentified_neuron)
 
-    neuron_parameters = @parameters Cₘ τCa Ca∞ Ca_tgt τg
+    neuron_parameters = @parameters area Cₘ τCa Ca∞ Iapp
     neuron_states = @variables V(t) Ca(t)
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:comp.hooks]]
     my_sum(syns) = comp.hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
 
     channel_systems = [ch() for ch in channels]
 
-    summed_membrane_currents = sum(ionic_current(ch, cs.sys) for (ch, cs) in zip(channels, channel_systems))
+    summed_membrane_currents = sum(ionic_current(cs.c, cs.sys) for cs in channel_systems)
 
-    summed_calcium_flux = sum(calcium_current(ch, cs.sys) for (ch, cs) in zip(channels, channel_systems))
+    summed_calcium_flux = sum(calcium_current(cs.c, cs.sys) for cs in channel_systems)
 
     connections = cat(
         [voltage_hook(V, cs) for cs in channel_systems],
         [calcium_hook(Ca, cs) for cs in channel_systems],
         dims = 1
     )
-    f = 0.094
+    f = 14.96 # uM*nF/nA 
+    #ionic currents are already carrying negative sign 
     diffeqs = cat(
-        [D(V) ~ (summed_membrane_currents + my_sum(syns)) / Cₘ],
-        [D(Ca) ~ (1 / τCa) * (-Ca + Ca∞ + f * summed_calcium_flux)],
+        [D(V) ~ (1 / Cₘ) * (summed_membrane_currents + my_sum(syns) + Iapp)],
+        [D(Ca) ~ (1 / τCa) * (-Ca + Ca∞ + (f * area * summed_calcium_flux / Cₘ))],
         dims = 1
     )
 
@@ -58,9 +66,9 @@ function build_neuron(comp, channels; reg::Bool = false, name = :unidentified_ne
     channel_defs = Dict{Num,Float64}()
     for cs in channel_systems
         param_names = external_params(cs.c)
-        if !isnothing(param_names)
-            for el in param_names
-                channel_defs[getproperty(cs.sys,el)] = comp.parameters[el]
+        for el in param_names
+            if haskey(comp.parameters, el) && hasproperty(cs.sys, el)
+                channel_defs[getproperty(cs.sys, el)] = comp.parameters[el]
             end
         end
     end
@@ -76,7 +84,9 @@ function build_neuron(comp, channels; reg::Bool = false, name = :unidentified_ne
         defaults = defaults,
         name = name
     )
-
+    if comp.hooks == 0
+        neur = structural_simplify(neur)
+    end
     return neur
 end
 
@@ -93,7 +103,7 @@ Issue: need to do all connections in one ḡChol
 """
 function add_connection(group, pre, post, syn::Synapse; name = ModelingToolkit.getname(group), i = 1)
     prename, postname = ModelingToolkit.getname.([pre, post])
-    synapse_sys = build_channel(syn; name = Symbol(prename, :to, postname, get_name(syn)))
+    synapse_sys = syn(; name = Symbol(prename, :to, postname, get_name(syn)))
 
     oldeqs = ModelingToolkit.get_eqs(group)
     neweqs = [
