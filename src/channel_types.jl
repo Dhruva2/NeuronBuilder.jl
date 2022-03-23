@@ -22,10 +22,23 @@ end
 Soma(init_states, params) = Soma(init_states, params, 0)
 """
     Prinz_conversion(s::Soma)
-This function does blah
+This function converts bare parameters in units of milliSiemens/cm2 (as used by the prinz paper) to conform with units of microSiemens/mm2
+
 """
 Prinz_conversion(s::Soma) = s.parameters[:Cₘ] / s.parameters[:area]
+
+"""
+    Liu_conversion(s::Soma)
+This function converts bare parameters in units of microSiemens/nanoFarads (as used by the Liu paper) to conform with units of microSiemens/mm2
+
+"""
 Liu_conversion(s::Soma) = s.parameters[:Cₘ]
+
+"""
+    syn_conv_factor(s::Soma)
+This function converts bare synaptic parameters in units of nanoSiemens*area (as used by the prinz paper, where area is baked in the synaptic conductances) to conform with units of microSiemens/mm2
+
+"""
 syn_conv_factor(s::Soma) = 1e-3 / s.parameters[:area]^2 #this gives μS/mm^2 
 
 struct ComponentSystem{C<:Component}

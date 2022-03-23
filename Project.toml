@@ -1,20 +1,5 @@
-name = "NeuronBuilder"
-uuid = "bdec0aff-bc35-4528-862d-7dacab2b11a0"
-authors = ["Dhruva2 <dhruvaraman@hotmail.com> and AndreaRamirezH <andreairh03@gmail.com>"]
-version = "0.1.0"
-
-[compat]
-ModelingToolkit = "8.5.4"
-Julia = "1.7"
-
 [deps]
 ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
-Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 
-
-[extras]
-CPUSummary = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test"]
+[compat]
+ModelingToolkit = "v8.5.4"
