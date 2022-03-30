@@ -16,9 +16,12 @@ Prinz_conv = Prinz_conversion(compart)
 AB2_ch = [Prinz.Na(100 * Prinz_conv), Prinz.CaS(6 * Prinz_conv), Prinz.CaT(2.5 * Prinz_conv), Prinz.H(0.01 * Prinz_conv),
     Prinz.Ka(50 * Prinz_conv), Prinz.KCa(5 * Prinz_conv), Prinz.Kdr(100 * Prinz_conv), Prinz.Leak(0.0)]
 
-neur = build_neuron(compart, AB2_ch; name=:neuronAB)
+Conductor_prinz2003 = [Prinz.Na(100 * Prinz_conv), Prinz.CaS(4 * Prinz_conv), Prinz.CaT(0 * Prinz_conv), Prinz.H(0.02 * Prinz_conv),
+    Prinz.Ka(0 * Prinz_conv), Prinz.KCa(15 * Prinz_conv), Prinz.Kdr(50 * Prinz_conv), Prinz.Leak(0.03)]
 
-prob = ODEProblem(neur, [], (0.0, 3000.0), [])
+neur = build_neuron(compart, Conductor_prinz2003; name=:neuronConductor)
+
+prob = ODEProblem(neur, [], (0.0, 2500.0), [])
 @time sol_individual = solve(prob, Rosenbrock23())
 
 function my_plot(sol, name)
@@ -29,4 +32,4 @@ function my_plot(sol, name)
     #savefig("$name.pdf")
 end
 
-my_plot(sol_individual, "AB_Prinz")
+my_plot(sol_individual, "PrinzAB")

@@ -19,7 +19,8 @@ mutable struct Soma{F<:AbstractFloat} <: Compartment
     hooks::Int64
 end
 
-Soma(init_states, params) = Soma(init_states, params, 0)
+Soma(init_states, params; num_connections = 0) = Soma(init_states, params, num_connections)
+
 """
     Prinz_conversion(s::Soma)
 This function converts bare parameters in units of milliSiemens/cm2 (as used by the prinz paper) to conform with units of microSiemens/mm2

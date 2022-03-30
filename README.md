@@ -1,27 +1,39 @@
 # NeuronBuilder
 
-This is a quick package for building small networks of detailed, conductance-based neurons out of ion channels and synapses. The idea is that it's easy to use this template and add your own ion channels /synapses, with your choice of dynamics. 
+This is a quick package for building small networks of detailed, conductance-based neurons out of ion channels and synapses. The idea is that it's easy to use this template and add your own ion channels / synapses, with your choice of dynamics. Iteratively adding these components to a neuronal somatic compartment is done using ModelingToolkit, which makes it scalable to any number of ion channels and synapses.
 
-If you want a more flexible platform to build neuron models from basic components you should check out the more comprehensive package [Conductor.jl](https://github.com/wsphillips/Conductor.jl). 
+If you want a more flexible platform to build neuron models, with e.g. multiple compartments, from basic components you should check out the more comprehensive package [Conductor.jl](https://github.com/wsphillips/Conductor.jl) (in active development). 
 
 
 # Installation and Usage
 
-1. Download this repo
-2. Switch to the package manager using `]` and then use `activate .` and `update`
-3. Then exit the package manager (`ctrl+c`) and type `using NeuronBuilder`
-4. Switch to the shell using `;` and then navigate to the scripts folder
-5. Run the script you want using `include XXX.jl`
+NeuronBuilder is available as a registered package and has a tagged release (v0.1.0)
+```
+#From Julia REPL
+] add NeuronBuilder
+```
+Once you exit the package manager (`ctrl+c`), type `using NeuronBuilder`.
+
+To try out the demo scripts:
+1. From a terminal, clone this repository
+```
+git clone https://github.com/Dhruva2/NeuronBuilder.jl
+cd NeuronBuilder.jl
+git checkout v0.1.0
+```
+2. Navigate to the scripts folder
+3. Open a Julia session and run the script you want, for example `include("individual_neurons.jl")`
 
 ## Running individual neurons
 
-- Build channels with `Liu.Na(g)` or `Prinz.Na(g)` if your sodium conductance has value `g`. 
-- To reproduce sets of channels as reported in the original papers (https://www.jneurosci.org/content/18/7/2309) (https://journals.physiology.org/doi/full/10.1152/jn.00641.2003) use the conversion factors for your choice of module: Liu to Neuron Builder -> `Liu_conversion` or Prinz to NeuronBuilder -> `Prinz_conversion`. These are specifically given in the individual neuron script.
-- From the Julia REPL run `include("individual_neurons.jl")` which will make your neurons
+- A sodium channel is created with `Liu.Na(g)` or `Prinz.Na(g)` if the conductance has value `g`. 
+- To reproduce sets of channels as reported in the papers [Liu et. al. 1998](https://www.jneurosci.org/content/18/7/2309) and [Prinz et. al. 2003](https://journals.physiology.org/doi/full/10.1152/jn.00641.2003) use the conversion factors `Liu_conversion` and `Prinz_conversion` to get the right units. You can see how these are specifically given in the `individual_neurons.jl` script and are multiplying with the original `g` value from the papers. 
+- The `gvalues_papers.jl` file has a small collection of conductances coming from various sources. You can copy-paste any of these into the script that simulates a single neuron.
 
 ## Running a network of neurons
 
-- The `connected_STG.jl` script shows how to add synapses between neurons.
-- The group of neurons and their connections is an `ODESystem`; the names of the variables in this system can be listed with `@show final_sys.states`. The problem that takes this system is a regular `ODEProblem` and You can convert the solution to an array using `A = Array(sol)` and plot it using `Plots.plot(sol.t,A[1,:])`. 
+- The `connected_STG.jl` script shows how to add synapses between neurons and reproduces the triphasic rhythm of the STG found in [Prinz et. al. 2004](http://www.nature.com/articles/nn1352).
+- Synapses also get a conversion factor which depends on the geometry of the somatic compartment.
+
 
 
