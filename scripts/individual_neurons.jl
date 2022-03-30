@@ -12,14 +12,11 @@ compart = Soma(ics, merge(reversals, params))
 
 Prinz_conv = Prinz_conversion(compart)
 
-# pick a set of conductances from the file gvalues_papers.jl 
+# pick a set of conductances from gvalues_papers.jl 
 AB2_ch = [Prinz.Na(100 * Prinz_conv), Prinz.CaS(6 * Prinz_conv), Prinz.CaT(2.5 * Prinz_conv), Prinz.H(0.01 * Prinz_conv),
     Prinz.Ka(50 * Prinz_conv), Prinz.KCa(5 * Prinz_conv), Prinz.Kdr(100 * Prinz_conv), Prinz.Leak(0.0)]
 
-Conductor_prinz2003 = [Prinz.Na(100 * Prinz_conv), Prinz.CaS(4 * Prinz_conv), Prinz.CaT(0 * Prinz_conv), Prinz.H(0.02 * Prinz_conv),
-    Prinz.Ka(0 * Prinz_conv), Prinz.KCa(15 * Prinz_conv), Prinz.Kdr(50 * Prinz_conv), Prinz.Leak(0.03)]
-
-neur = build_neuron(compart, Conductor_prinz2003; name=:neuronConductor)
+neur = build_neuron(compart, AB2_ch; name=:ABneuron)
 
 prob = ODEProblem(neur, [], (0.0, 2500.0), [])
 @time sol_individual = solve(prob, Rosenbrock23())

@@ -35,5 +35,11 @@ git checkout v0.1.0
 - The `connected_STG.jl` script shows how to add synapses between neurons and reproduces the triphasic rhythm of the STG found in [Prinz et. al. 2004](http://www.nature.com/articles/nn1352).
 - Synapses also get a conversion factor which depends on the geometry of the somatic compartment.
 
+## Adding your own libraries of custom ion channels
 
+- Fork NeuronBuilder 
+- Go to the src/assets folder, you'll find two modules called Liu and Prinz. 
+- Each module has a list of channels with specified dynamics
+- You can copy-paste the structure of those modules, just changing the dynamics and channel names.
+- Feel free to send us the library you built to push to the master branch! :)
 
