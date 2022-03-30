@@ -1,7 +1,7 @@
 name = "NeuronBuilder"
 uuid = "bdec0aff-bc35-4528-862d-7dacab2b11a0"
 authors = ["Dhruva2 <dhruvaraman@hotmail.com> and AndreaRamirezH <andreairh03@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [compat]
 ModelingToolkit = "8.5.4"
