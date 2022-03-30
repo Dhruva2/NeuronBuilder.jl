@@ -4,7 +4,7 @@ Running the STG network
 - Synapses also get a conversion factor which depends on the geometry of the somatic compartment.
 - The group of neurons and their connections is an `ODESystem` on which we do `structural_simplify(grp)` to eliminate redundant variables. 
 - The names of the variables in the system can be listed with `@show grp.states`. The problem that then takes this system is a regular `ODEProblem`.
-- `plot(sol;  vars = [(0,1), (0,2), (0,3)])` . 
+- You can plot variables by their names with plot(sol;  vars = [STG.AB₊V]). 
 ```
 using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
 
@@ -58,5 +58,3 @@ prob = ODEProblem(STG, [], tspan, [])
 @time sol = solve(prob, AutoTsit5(Rosenbrock23()))
 
 plot(sol, xlims=(5000, 10000), ylims=(-80, 70); vars = [STG.AB₊V, STG.LP₊V, STG.PY₊V ])
-
-# every neuron has 13 variables, we get only voltages with indices 1, 14, 27
