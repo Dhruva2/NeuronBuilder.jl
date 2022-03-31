@@ -1,5 +1,5 @@
 #################### Na ###############################
-struct Na{F<:AbstractFloat} <: IonChannel
+struct Na{F<:Real} <: IonChannel
     gNa::F
     mNa::F
     hNa::F
@@ -25,7 +25,7 @@ function channel_dynamics(ch::Na, V, Ca)
 end
 
 #################### Slow calcium current #############################
-struct CaS{F<:AbstractFloat} <: IonChannel
+struct CaS{F<:Real} <: IonChannel
     gCaS::F
     mCaS::F
     hCaS::F
@@ -56,7 +56,7 @@ end
 
 #################### Transient calcium current ######################
 
-struct CaT{F<:AbstractFloat} <: IonChannel
+struct CaT{F<:Real} <: IonChannel
     gCaT::F
     mCaT::F
     hCaT::F
@@ -85,7 +85,7 @@ function channel_dynamics(ch::CaT, V, Ca)
 end
 
 #################### A-type potassium current #########################
-struct Ka{F<:AbstractFloat} <: IonChannel
+struct Ka{F<:Real} <: IonChannel
     gKa::F
     mKa::F
     hKa::F
@@ -112,7 +112,7 @@ end
 
 ################### Calcium-activated potassium current ########
 
-struct KCa{F<:AbstractFloat} <: IonChannel
+struct KCa{F<:Real} <: IonChannel
     gKCa::F
     mKCa::F
 end
@@ -134,7 +134,7 @@ function channel_dynamics(ch::KCa, V, Ca)
 end
 
 #################### Delayed rectifier potassium current ######################
-struct Kdr{F<:AbstractFloat} <: IonChannel
+struct Kdr{F<:Real} <: IonChannel
     gKdr::F
     mKdr::F
 end
@@ -157,7 +157,7 @@ end
 
 #################### H current ####################
 
-struct H{F<:AbstractFloat} <: IonChannel
+struct H{F<:Real} <: IonChannel
     gH::F
     mH::F
 end
@@ -180,7 +180,7 @@ end
 
 #################### Leak current #########################
 
-struct Leak{F<:AbstractFloat} <: IonChannel
+struct Leak{F<:Real} <: IonChannel
     gLeak::F
 end
 
