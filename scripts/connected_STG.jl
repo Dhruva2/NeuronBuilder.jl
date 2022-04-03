@@ -1,11 +1,11 @@
-```
-Running the STG network 
-- First run a single neuron to load everything with `include("individual_neurons.jl")` in the REPL
-- Synapses also get a conversion factor which depends on the geometry of the somatic compartment.
-- The group of neurons and their connections is an `ODESystem` on which we do `structural_simplify(grp)` to eliminate redundant variables. 
-- The names of the variables in the system can be listed with `@show grp.states`. The problem that then takes this system is a regular `ODEProblem`.
-- You can plot variables by their names with plot(sol;  vars = [STG.AB₊V]). 
-```
+# ```
+# Running the STG network 
+# - First run a single neuron to load everything with `include("individual_neurons.jl")` in the REPL
+# - Synapses also get a conversion factor which depends on the geometry of the somatic compartment.
+# - The group of neurons and their connections is an `ODESystem` on which we do `structural_simplify(grp)` to eliminate redundant variables. 
+# - The names of the variables in the system can be listed with `@show grp.states`. The problem that then takes this system is a regular `ODEProblem`.
+# - You can plot variables by their names with plot(sol;  vars = [STG.AB₊V]). 
+# ```
 using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
 
 #Using parameters from Prinz (2004) Similar network activity from disparate circuit parameters
@@ -17,11 +17,11 @@ LP4_ch = [Prinz.Na(100.0 * Prinz_conv), Prinz.CaS(4.0 * Prinz_conv), Prinz.CaT(0
 PY1_ch = [Prinz.Na(100.0 * Prinz_conv), Prinz.CaS(2.0 * Prinz_conv), Prinz.CaT(2.4 * Prinz_conv), Prinz.H(0.05 * Prinz_conv), Prinz.Ka(50.0 * Prinz_conv), Prinz.KCa(0.0 * Prinz_conv), Prinz.Kdr(125.0 * Prinz_conv), Prinz.Leak(0.01 * Prinz_conv)]
 
 reversals = Dict(:ENa => 50.0, :EH => -20.0, :EK => -80.0, :ELeak => -50.0)
-comp1 = Soma(Dict(:V => -60.0, :Ca => 0.05), merge(reversals, params);num_connection= 1) 
+comp1 = Soma(Dict(:V => -60.0, :Ca => 0.05), merge(reversals, params), 1) 
 reversals = Dict(:ENa => 50.0, :EH => -20.0, :EK => -80.0, :ELeak => -50.0)
-comp2 = Soma(Dict(:V => -55.0, :Ca => 0.05), merge(reversals, params);num_connection=  3) 
+comp2 = Soma(Dict(:V => -55.0, :Ca => 0.05), merge(reversals, params),  3) 
 reversals = Dict(:ENa => 50.0, :EH => -20.0, :EK => -80.0, :ELeak => -50.0)
-comp3 = Soma(Dict(:V => -65.0, :Ca => 0.05), merge(reversals, params);num_connection=  3) 
+comp3 = Soma(Dict(:V => -65.0, :Ca => 0.05), merge(reversals, params), 3) 
 
 AB = build_neuron(comp1, AB2_ch; name=:AB)
 PY = build_neuron(comp2, PY1_ch; name=:PY)
