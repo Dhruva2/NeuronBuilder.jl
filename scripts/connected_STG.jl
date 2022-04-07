@@ -44,9 +44,7 @@ PYLP_glut = Glut(30.0 * conv_factor)
 grp = add_connection(grp, AB, LP, ABLP_chol; i=1)
 grp = add_connection(grp, AB, LP, ABLP_glut; i=2)
 grp = add_connection(grp, PY, LP, PYLP_glut; i=3)
-
 grp = add_connection(grp, LP, AB, LPAB_glut; i=1)
-
 grp = add_connection(grp, LP, PY, LPPY_glut; i=1)
 grp = add_connection(grp, AB, PY, ABPY_glut; i=2)
 grp = add_connection(grp, AB, PY, ABPY_chol; i=3)

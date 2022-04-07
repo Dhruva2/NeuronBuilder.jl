@@ -1,7 +1,8 @@
-using NeuronBuilder, OrdinaryDiffEq, ModelingToolkit, Plots
+using ModelingToolkit, OrdinaryDiffEq, Plots, NeuronBuilder
+
 
 const Area = 0.0628 # Prinz/Liu 0.0628 mm2
-const Cm = 10. # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
+const Cm = 10.0 # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
 
 ics = Dict(:V => -60.0, :Ca => 0.05)
 reversals = Dict(:ENa => 50.0, :EH => -20.0, :EK => -80.0, :ELeak => -50.0)

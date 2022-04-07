@@ -9,9 +9,10 @@ export t, D
 include("channel_types.jl")
 export Synapse, IonChannel, RegIonChannel, RegIon, Soma, Compartment, Component, ComponentSystem, Liu_conversion, Prinz_conversion, syn_conv_factor
 
+# include("specification_types.jl")
+
 include("helper_functions.jl")
 export get_name, get_g, Area, Cm, L2NB, P2NB
-
 function channel_dynamics() end
 function ionic_current() end
 function calcium_current() end

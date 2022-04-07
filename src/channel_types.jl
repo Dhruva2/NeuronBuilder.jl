@@ -1,5 +1,4 @@
 abstract type Component end
-
 abstract type IonChannel <: Component end
 abstract type RegIonChannel <: Component end
 
@@ -10,16 +9,21 @@ struct RegIon{F<:AbstractFloat,I<:IonChannel} <: RegIonChannel
 end
 
 abstract type Synapse <: Component end
-
 abstract type Compartment <: Component end
 
-mutable struct Soma{F<:AbstractFloat} <: Compartment
+struct Soma{F<:AbstractFloat} <: Compartment
     initial_states::Dict{Symbol,F}
     parameters::Dict{Symbol,F}
     hooks::Int64
 end
 
-Soma(init_states, params; num_connections = 0) = Soma(init_states, params, num_connections)
+Soma(init_states, params; num_connections=0) = Soma(init_states, params, num_connections)
+
+function Soma_Requirements(channels::Vector{T}) where {T<:Component}
+    mapreduce((x, y) -> unique!([x..., y...]), channels) do channel
+        external_params(channel)
+    end
+end
 
 """
     Prinz_conversion(s::Soma)
