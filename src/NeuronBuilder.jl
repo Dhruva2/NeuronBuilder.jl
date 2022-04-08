@@ -7,9 +7,12 @@ const D = Differential(t)
 export t, D
 
 include("channel_types.jl")
-export Synapse, IonChannel, RegIonChannel, RegIon, Soma, Compartment, Component, ComponentSystem, Liu_conversion, Prinz_conversion, syn_conv_factor
+export Synapse, IonChannel, RegIonChannel, RegIon, Soma, Compartment, Component, ComponentSystem, Liu_conversion, Prinz_conversion, syn_conv_factor, EmptyConnection
 
-# include("specification_types.jl")
+include("specification_types.jl")
+export Neuron
+include("build_network.jl")
+export build_network
 
 include("helper_functions.jl")
 export get_name, get_g, Area, Cm, L2NB, P2NB

@@ -5,6 +5,7 @@ struct Na{F,D<:Real} <: IonChannel
     hNa::F
 end
 
+
 Na(x) = Na(x, 0.0, 0.0)
 ionic_current(::Na, sys::ODESystem) = sys.INa
 external_params(::Na) = (:ENa, :τNa)
@@ -12,6 +13,7 @@ m∞(::Na, V) = 1.0 / (1.0 + exp((V + 25.5) / -5.29))
 h∞(::Na, V) = 1.0 / (1.0 + exp((V + 48.9) / 5.18))
 τm(::Na, V) = 2.64 - 2.52 / (1 + exp((V + 120.0) / -25.0))
 τh(::Na, V) = (1.34 / (1.0 + exp((V + 62.9) / -10.0))) * (1.5 + 1.0 / (1.0 + exp((V + 34.9) / 3.6)))
+
 
 function channel_dynamics(ch::Na, V, Ca)
     states = @variables mNa(t) hNa(t) INa(t)
@@ -194,4 +196,4 @@ function channel_dynamics(ch::Leak, V, Ca)
     current = [eqs[1]]
     defaultmap = [gLeak => ch.gLeak]
     return eqs, states, parameters, current, defaultmap
-end  
+end

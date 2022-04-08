@@ -8,9 +8,13 @@ node_func(i) = Neuron(i)
 edge_func(i,j) = Synapse(i,j)
 
 
+Non symmetric adjacency matrix as a->b synapse and b->a synapse can coexist.
+Tuple of synapses as output to allow for multiple synapses
+
 3. Find a nice way of adding callbacks. need to access e.g. the index of the voltage of the subsystems of different neurons in the solution array
 
 VoltageIndex(ODESystem, i)  = index of voltage of ith neuron
 
 
 4. ask andrea to get rid of the 14.96 and the prinz_conversion etc in the package. Just make an overall constant OUTSIDE of the package that multiplies the conductances. Will need different constants for calcium and voltage?
+

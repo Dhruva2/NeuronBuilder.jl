@@ -34,12 +34,13 @@ function (syn::Synapse)(; name=get_name(syn))
 end
 
 
-function build_neuron(comp, channels; name=:unidentified_neuron)
+
+function build_neuron(comp::Soma, channels::Vector{IonChannel}, hooks::Integer, name::Symbol)
 
     neuron_parameters = @parameters area Cₘ τCa Ca∞ Iapp
     neuron_states = @variables V(t) Ca(t)
-    syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:comp.hooks]]
-    my_sum(syns) = comp.hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
+    syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:hooks]]
+    my_sum(syns) = hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
 
     channel_systems = [ch() for ch in channels]
 
@@ -75,16 +76,28 @@ function build_neuron(comp, channels; name=:unidentified_neuron)
         defaults=merge(soma_defs, channel_defs, state_defs),
         name=name
     )
-    if comp.hooks == 0
+    if hooks == 0
         neur = structural_simplify(neur)
     end
     return neur
 end
 
 
-function build_group(arr_of_neurons; name=:group)
+"""
+Advantage of previous method:
+- never had to rebuild build_neuron, as there were the right amount of hooks
+- but build_neuron(AB) is 0.014 seconds
+
+Potential new method doesn't work
+- make pre and post in add_connection each time, by build_neuron(pre_neuron)
+- but need to mutably change equations from old grouping each time
+
+1. don't add any systems when you initially build group
+"""
+
+function build_group(neurons::Vector{N}; name=:group) where {N<:Neuron}
     eqs = Array{Equation,1}(undef, 0)
-    ODESystem(eqs, t, [], []; name=name, systems=arr_of_neurons)
+    ODESystem(eqs, t, [], []; name=name, systems=[el.ODESystem for el in neurons])
 end
 
 
@@ -92,7 +105,14 @@ end
 Issue: need to do all connections in one ḡChol
 
 """
-function add_connection(group, pre, post, syn::Synapse; name=ModelingToolkit.getname(group), i=1)
+
+function add_connection(group, pre, post, syn::EmptyConnection; kwargs...)
+    return group
+end
+
+function add_connection(group, pre_n, post_n, syn::Synapse; name=ModelingToolkit.getname(group), i=1)
+    pre = pre_n.ODESystem
+    post = post_n.ODESystem
     prename, postname = ModelingToolkit.getname.([pre, post])
     synapse_sys = syn(; name=Symbol(prename, :to, postname, get_name(syn)))
 
