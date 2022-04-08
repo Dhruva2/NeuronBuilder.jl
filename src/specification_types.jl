@@ -2,7 +2,7 @@ abstract type Specification end
 
 struct Neuron{S<:Soma,OS<:ODESystem}
     soma::S
-    channels::Vector{IonChannel}
+    channels::Vector{Component}
     hooks::Int64
     name::Symbol
     ODESystem::OS

@@ -35,7 +35,7 @@ end
 
 
 
-function build_neuron(comp::Soma, channels::Vector{IonChannel}, hooks::Integer, name::Symbol)
+function build_neuron(comp::Soma, channels::Vector{Component}, hooks::Integer, name::Symbol)
 
     neuron_parameters = @parameters area Cₘ τCa Ca∞ Iapp
     neuron_states = @variables V(t) Ca(t)

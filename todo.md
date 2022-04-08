@@ -22,3 +22,8 @@ VoltageIndex(ODESystem, i)  = index of voltage of ith neuron
 
 4. ask andrea to get rid of the 14.96 and the prinz_conversion etc in the package. Just make an overall constant OUTSIDE of the package that multiplies the conductances. Will need different constants for calcium and voltage?
 
+### ROugh
+
+Plasticity Rule:
+
+1. Finds relevant parameters
