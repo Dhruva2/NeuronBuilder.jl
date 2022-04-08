@@ -1,5 +1,9 @@
 1. Consistent way of turning parameters into states with dynamics. Regulated is one example. More generally want it to work to add synapses with dynamics.
 
+Idea: PlasticityRule(Component). Regulated is a plasticity rule on ion channels. EG stdp is a plasticity rule on synapses.
+
+Each plasticity rule just turns parameters into states with specified dynamics
+
 2. Easy way of constructing networks of neurons. Maybe make an intermediate specification type. Will make life easier.
 
 build_network(node_func, edge_func, args...; kwargs...)
