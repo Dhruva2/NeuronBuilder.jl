@@ -21,6 +21,10 @@ function ionic_current() end
 function calcium_current() end
 function external_params() end
 
+include("assets/UnitLiu/UnitLiu.jl")
+using .UnitLiu
+export UnitLiu
+
 include("assets/Liu/Liu.jl")
 using .Liu
 export Liu
