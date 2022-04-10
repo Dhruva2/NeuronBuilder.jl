@@ -11,11 +11,29 @@ Callin a PlasticityRule() can then do the same as RegIonChannel, but using pr.ch
 """
 
 
-abstract type PlasticityRule end
 component(::PlasticityRule) = PlasticityRule.component
 
 
-struct OLearyCalciumReg{F<:AbstractFloat,I<:IonChannel} <: PlasticityRule
+struct IntegralCalciumReg{F<:AbstractFloat,I<:IonChannel} <: PlasticityRule
     component::I
+    Rion::F
+    τion::Symbol
+end
+
+"""
+1. get name of parameters to turn into states
+2. create new states out of them
+3. append equations
+1. and 2. might be independent of plasticity rule
+"""
+function add_plasticity_dynamics(I::IntegralCalciumReg)
+    @variables V(t) Ca(t)
+    eqs, states, parameters, current, defaultmap = channel_dynamics(I.component, V, Ca)
+    
+end
+
+
+function (pr::PlasticityRule)()
 
 end
+

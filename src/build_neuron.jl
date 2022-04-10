@@ -33,9 +33,21 @@ function (syn::Synapse)(; name=get_name(syn))
     return ComponentSystem(syn, sys)
 end
 
+function build_new_neuron(comp::Soma, channels::Vector{Component}, hooks::Integer, name::Symbol)
+    # add warning labeling each requirement that isn't included
+    # soma must have flow variables and external hook variables
 
+    # add hooks a posteriori? 
+    # push al the mess into separate functions so that the only key code is the D(V) and D(Ca)
 
-function build_neuron(comp::Soma, channels::Vector{Component}, hooks::Integer, name::Symbol)
+    # Neuron parameteres built from flows, reversals, 
+
+    @variables V(t)
+    ∪(reversals.([channels])...)
+
+end
+
+function build_neuron(comp::Soma, channels::Vector{C}, hooks::Integer, name::Symbol) where {C<:Component}
 
     neuron_parameters = @parameters area Cₘ τCa Ca∞ Iapp
     neuron_states = @variables V(t) Ca(t)
@@ -46,6 +58,8 @@ function build_neuron(comp::Soma, channels::Vector{Component}, hooks::Integer, n
 
     summed_membrane_currents = sum(ionic_current(cs.c, cs.sys) for cs in channel_systems)
     summed_calcium_flux = sum(calcium_current(cs.c, cs.sys) for cs in channel_systems)
+
+    ## here you can just hook the flows
     connections = cat(
         [voltage_hook(V, cs) for cs in channel_systems],
         [calcium_hook(Ca, cs) for cs in channel_systems],
@@ -60,6 +74,14 @@ function build_neuron(comp::Soma, channels::Vector{Component}, hooks::Integer, n
     )
 
     eqs = filter(x -> !(x == (Num(0) ~ Num(0))), cat(connections, diffeqs; dims=1))
+
+    ## external_params used to do the reversals and time constants.
+    ## τCa isnt used inside the calcium neurons
+    """
+    Ca inf is 0.05
+    external_params used to do the reversals and time constants. get rid.
+    tau ca is only a property of the soma. not entered in cas or cat channels
+    """
 
     channel_defs = Dict(
         getproperty(cs.sys, el) => comp.parameters[el]

@@ -9,17 +9,20 @@ syn_conv_factor = 1e-3 / Area^2 #this gives μS/mm^2
 
 
 ics = Dict(:V => -60.0, :Ca => 0.05)
-reversals = Dict(:ENa => 50.0, :EH => -20.0, :EK => -80.0, :ELeak => -50.0)
+_reversals = Dict(:ENa => 50.0, :EH => -20.0, :EK => -80.0, :ELeak => -50.0)
 
 # [Ca]∞ units are uM. 
 params = Dict(:area => Area, :Cₘ => Cm, :τCa => 200.0, :Ca∞ => 0.05, :Ca_tgt => 200.0, :τg => 1e6, :Iapp => 0.0)
-compart = Soma(ics, merge(reversals, params))
-neur = Neuron(compart, AB2_ch, :ABneuron)
+compart = Soma(ics, merge(_reversals, params))
+
+AB2_ch = [Prinz.Na(100 * Prinz_conv), Prinz.CaS(6 * Prinz_conv), Prinz.CaT(2.5 * Prinz_conv), Prinz.H(0.01 * Prinz_conv),
+    Prinz.Ka(50 * Prinz_conv), Prinz.KCa(5 * Prinz_conv), Prinz.Kdr(100 * Prinz_conv), Prinz.Leak(0.0)]
+
+neur = Neuron(compart, AB2_ch, 0, :ABneuron)
 Prinz_conv = Prinz_conversion(compart)
 
 # pick a set of conductances from gvalues_papers.jl 
-AB2_ch = [Prinz.Na(100 * Prinz_conv), Prinz.CaS(6 * Prinz_conv), Prinz.CaT(2.5 * Prinz_conv), Prinz.H(0.01 * Prinz_conv),
-    Prinz.Ka(50 * Prinz_conv), Prinz.KCa(5 * Prinz_conv), Prinz.Kdr(100 * Prinz_conv), Prinz.Leak(0.0)]
+
 
 
 prob = ODEProblem(neur.ODESystem, [], (0.0, 2500.0), [])
