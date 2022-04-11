@@ -10,7 +10,7 @@ include("typetree.jl")
 export Synapse, IonChannel, RegIonChannel, RegIon, Soma, Compartment, Component, ComponentSystem, Liu_conversion, Prinz_conversion, syn_conv_factor, EmptyConnection
 
 export Voltage, Ion, Sodium, Potassium, Calcium, Proton, Leak
-export _IonChannel
+export FlowChannel
 export ions
 
 export PlasticityRule, Gate
@@ -19,7 +19,8 @@ export ComponentInfo, IonicConductances, Flows, IonicCurrents, CalciumFlows, Ext
 
 
 include("specification_types.jl")
-export Neuron
+export Neuron, BasicNeuron
+export Geometry, NoGeometry
 include("build_network.jl")
 export build_network
 

@@ -1,7 +1,7 @@
 ### Basic components and subtypes
 abstract type Flower end
 abstract type Ion <: Flower end
-abstract type AbstractFlower <: Flower end
+abstract type AbstractIon <: Ion end
 
 """
 Not including voltage in tagging ion channels. Any flow channel. Flows are all charged particles. So they will always include voltage. Not going to consider flows of e.g. proteins
@@ -11,8 +11,10 @@ struct Sodium <: Ion end
 struct Potassium <: Ion end
 struct Calcium <: Ion end
 struct Proton <: Ion end
-struct Leak <: AbstractFlower end
+struct Leak <: AbstractIon end
 
+ionic(x) = x <: Ion
+export ionic
 
 shorthand_name(::Type{Voltage}) = :V
 shorthand_name(::Type{Sodium}) = :Na
@@ -27,8 +29,8 @@ abstract type Component end
 abstract type Compartment <: Component end
 abstract type FlowChannel{Sensors,Actuators} <: Component end
 
-is_geometric(::Compartment{T}) = T
-is_geometric(::Component) = false
+# is_geometric(::Compartment{T}) = T
+# is_geometric(::Component) = false
 
 FlowChannel(T) = FlowChannel{Tuple{},T}
 FlowChannel(S, A) = FlowChannel{S,A}
@@ -55,10 +57,14 @@ sensedvars(i::FlowChannel) =
         Symbol(thing |> shorthand_name)
     end
 
+# function reversals(i::FlowChannel)
+    
+# end
+
 reversals(i::FlowChannel) =
-    map(actuated(i)) do thing
+     map(actuated(i)) do thing
         Symbol(:E, shorthand_name(thing))
-    end
+    end 
 
 currents(i::FlowChannel) =
     map(actuated(i)) do thing
@@ -87,11 +93,10 @@ instantiate_parameters(c::Component, args...) =
     end |> Iterators.flatten |> collect
 
 
-flows(c::ComponentSystem) = flows(c.c)
-sensedvars(c::ComponentSystem) = sensedvars(c.c)
-reversals(c::ComponentSystem) = reversals(c.c)
-currents(c::ComponentSystem) = currents(c.c)
-conductances(c::ComponentSystem) = conductances(c.c)
+instantiate_variables(v::Vector{Symbol}) = 
+    map(v) do f
+        @variables $f(t)
+    end |> Iterators.flatten |> collect  
 
 
 
@@ -124,9 +129,13 @@ struct ComponentSystem{C<:Component,S<:AbstractTimeDependentSystem}
     sys::S
 end
 
+# flows(c::ComponentSystem) = flows(c.c)
+# sensedvars(c::ComponentSystem) = sensedvars(c.c)
+# reversals(c::ComponentSystem) = reversals(c.c)
+# currents(c::ComponentSystem) = currents(c.c)
+# conductances(c::ComponentSystem) = conductances(c.c)
 
-
-
+# export getva
 
 
 """
@@ -165,7 +174,9 @@ syn_conv_factor(s::Soma) = 1e-3 / s.parameters[:area]^2 #this gives μS/mm^2
 
 ######### Geometries ##############
 
-abstract type Geometry end 
-struct NoGeometry end 
+abstract type Geometry end
+struct NoGeometry{C} <: Geometry
+    capacitance::C
+end
 
 abstract type Neuron <: Compartment end

@@ -26,32 +26,72 @@ building neuron
 
 - reversals are defined by the ion channels to which it is connected. so not in type signature
 - same for currents
-
+- update equations: 
 - voltage equation 
 """
-struct BasicNeuron{G <: Geometry, D <: Dict, C <: FlowChannel} <: Neuron{T}
+struct BasicNeuron{G<:Geometry,D<:Dict,C<:FlowChannel} <: Neuron
     geometry::G
     defaults::D
     channels::Vector{C}
     hooks::Int64
     name::Symbol
-    function BasicNeuron{G,D,C}(g::G, d::D, c::Vector{C}, h::Int64, n::Symbol)
-        T = Iterators.flatten(flows.(channels)) |> unique
-        new{G,D,C,T}(g, d, c, h, n)
-    end
 end
 
-# function BasicNeuron(g,d,c,h,n) 
-#     T = Iterators.flatten(flows.(channels)) |> unique
-#     return BasicNeuron(g,d,c,h,n,T)
-# end
 
-abstract type Geometry end 
-abstract type FlowChannel end 
-abstract type Neuron end
+LiuNeuron(d, vc, h, name) = BasicNeuron(NoGeometry(), d, vc, h, name)
 
 
-
-function StandardVoltageUpdate(::LiuSoma, neuron, flux)
+function (b::BasicNeuron)()
     
+    
+    
+    tracked = vcat(Iterators.flatten(sensedvars.(b.channels)) |> unique)
+    tracked_vars = instantiate_variables(tracked)
+    
+    syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:hooks]]
+    my_sum(syns) = hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
+    chs = [ch() for ch in b.channels]
+
+
+    D(V)
+    # tracked_fluxes = map(tracked) do thing
+    #     if thing == :V
+    #         sum(chs) do ch
+    #             ModelingToolkit.getvar(ch.sys, currents )
+    #         end        
+    # end
+
 end
+
+function StandardVoltageDynamics(n::Neuron, flux)
+    C = get_capacitance(n.geometry)
+end
+
+function get_capacitance(::NoGeometry)
+
+end
+
+
+abstract type FlowDynamics{F} end
+
+struct BasicVoltageDynamics <: FlowDynamics{Voltage} end
+"""
+currents should include synaptic current
+"""
+function (b::BasicVoltageDynamics)(n::Neuron, V, currents, input)
+    C = get_capacitance(n.geometry)
+    return (1 / C) * (currents + input)
+end
+struct LiuCalciumDynamics{T<:Number} <: FlowDynamics{Calcium}
+    τCa::T
+    Ca∞::T
+end
+
+function (l::LiuCalciumDynamics)(n::Neuron, Ca, currents)
+    C = get_capacitance(n.geometry)
+    (1 / l.τCa) * (-Ca + Ca∞ + (f * area * summed_calcium_flux / C))
+end
+
+# defaults = Dict()
+# neur = BasicNeuron(NoGeometry(20.), defaults, channels, 0, :AB)
+
