@@ -66,3 +66,13 @@ If the requisite arguments are not entered, default to a stnadard update:
 LiuCalciumUpdate gives the RHS of D(Ca), given an input summed_flows for calcium
 
 MOVE ECa to property of soma, not cas and cat channels
+
+
+## Add convenience function
+which takes in a channel and checks it for consistency:
+    its ODESystem has a voltage 
+
+
+which takes in a geometry and checks it for consistency:
+    it calculates reversals
+    it calculates capacitance

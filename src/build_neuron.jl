@@ -82,7 +82,7 @@ function build_neuron(comp::Soma, channels::Vector{C}, hooks::Integer, name::Sym
     external_params used to do the reversals and time constants. get rid.
     tau ca is only a property of the soma. not entered in cas or cat channels
     """
-
+    ## dictionary hooking variables of symbols el to their dictionary settings
     channel_defs = Dict(
         getproperty(cs.sys, el) => comp.parameters[el]
         for cs in channel_systems for el in external_params(cs.c) if (haskey(comp.parameters, el) && hasproperty(cs.sys, el))
@@ -93,6 +93,7 @@ function build_neuron(comp::Soma, channels::Vector{C}, hooks::Integer, name::Sym
     )
 
     state_defs = Dict(V => comp.initial_states[:V], Ca => comp.initial_states[:Ca])
+
     neur = ODESystem(eqs, t;
         systems=[cs.sys for cs in channel_systems],
         defaults=merge(soma_defs, channel_defs, state_defs),

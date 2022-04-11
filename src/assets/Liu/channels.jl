@@ -1,23 +1,3 @@
-const f = 14.96 # uM*nF/nA 
-"""
-eg IonicConductance(::Na) = :gNa
-"""
-
-# NeuronBuilder.IonicCurrents(i::IonChannel) = (Symbol(:I, nameof(i |> typeof)),)
-
-
-# # CalciumFlows(c::CalciumChannel) = (Symbol(:I, nameof(c |> typeof), :_Ca),)
-
-# NeuronBuilder.Flows(i::IonChannel) = (:V,)
-# # NeuronBuilder.Flows(c::CalciumChannel) = (:V, :Ca)
-# NeuronBuilder.Reversals(i::IonChannel) = (Symbol(:E, nameof(i |> typeof)),)
-
-# flows = NeuronBuilder.Flows
-# ionic_conductances = NeuronBuilder.IonicConductances
-# ionic_currents = NeuronBuilder.IonicCurrents
-# reversals = NeuronBuilder.Reversals
-
-
 #################### NaV ###############################
 
 struct Na{F,D<:Real} <: FlowChannel(Sodium)
@@ -25,7 +5,7 @@ struct Na{F,D<:Real} <: FlowChannel(Sodium)
     mNa::F
     hNa::F
 end
-Na(x) = Na(x, 0., 0.)
+Na(x) = Na(x, 0.0, 0.0)
 m∞(::Na, V) = 1.0 / (1.0 + exp((V + 25.5) / -5.29))
 h∞(::Na, V) = 1.0 / (1.0 + exp((V + 48.9) / 5.18))
 τm(::Na, V) = 1.32 - 1.26 / (1 + exp((V + 120.0) / -25.0))
@@ -68,9 +48,8 @@ function (ch::CaS)()
 
     eqs = [D(mCaS) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mCaS),
         D(hCaS) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hCaS),
-        E ~ ECa(ch, Ca),
         I ~ g * mCaS^3 * hCaS * (E - V)]
-    current = [eqs[4]]
+    current = [eqs[3]]
     defaultmap = [mCaS => ch.mCaS, hCaS => ch.hCaS, g => ch.gCaS]
     return ComponentSystem(ch, ODESystem(eqs, t, [V, Ca, E, mCaS, hCaS, I], [g]; observed=current, defaults=defaultmap, name=get_name(ch)))
 end
@@ -98,9 +77,8 @@ function (ch::CaT)()
 
     eqs = [D(mCaT) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mCaT),
         D(hCaT) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hCaT),
-        E ~ ECa(ch, Ca),
         I ~ g * mCaT^3 * hCaT * (E - V)]
-    current = [eqs[4]]
+    current = [eqs[3]]
     defaultmap = [mCaT => ch.mCaT, hCaT => ch.hCaT, g => ch.gCaT]
     return ComponentSystem(ch, ODESystem(eqs, t, [V, Ca, E, mCaT, hCaT, I], [g]; observed=current, defaults=defaultmap, name=get_name(ch)))
 end
@@ -151,7 +129,7 @@ function (ch::KCa)()
     eqs = [
         D(mKCa) ~ (1 / τm(ch, V)) * (m∞(ch, V, Ca) - mKCa),
         I ~ (g * mKCa^4) * (E - V)
-        ]
+    ]
     current = [eqs[2]]
     defaultmap = [mKCa => ch.mKCa, g => ch.gKCa]
     return ComponentSystem(ch, ODESystem(eqs, t, [V, Ca, mKCa, I], [g, E]; observed=current, defaults=defaultmap, name=get_name(ch)))

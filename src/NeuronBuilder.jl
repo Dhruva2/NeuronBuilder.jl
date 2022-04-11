@@ -9,18 +9,20 @@ export t, D
 include("typetree.jl")
 export Synapse, IonChannel, RegIonChannel, RegIon, Soma, Compartment, Component, ComponentSystem, Liu_conversion, Prinz_conversion, syn_conv_factor, EmptyConnection
 
-export Voltage, Ion, Sodium, Potassium, Calcium, Proton, Leak
-export FlowChannel
+export Voltage, Ion, Sodium, Potassium, Calcium, Proton, Leak, Reversal, Species
+export FlowChannel, FlowDynamics, BasicVoltageDynamics, LiuCalciumDynamics, LiuCaReversalDynamics
 export ions
 
-export PlasticityRule, Gate
+export Injection
+export PlasticityRule
 
-export ComponentInfo, IonicConductances, Flows, IonicCurrents, CalciumFlows, ExternalHooks, InstantiateVariables, Reversals
+export ComponentInfo, IonicConductances, Flows, IonicCurrents, CalciumFlows, ExternalHooks, InstantiateVariables, Reversal
 
 
-include("specification_types.jl")
+include("neurons.jl")
 export Neuron, BasicNeuron
 export Geometry, NoGeometry
+export capacitance
 include("build_network.jl")
 export build_network
 
