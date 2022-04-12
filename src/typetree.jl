@@ -241,32 +241,46 @@ In the very near future need to add inputs and synaptic currents to this way of 
 
 
 abstract type SpeciesDynamics{F} end
+get_parameters(::SpeciesDynamics) = nothing
+get_states(::SpeciesDynamics) = nothing
+default_params(::SpeciesDynamics, a, b, c) = Dict{Num,Float64}()
+default_states(::SpeciesDynamics, a, b, c) = Dict{Num,Float64}()
+
 struct BasicVoltageDynamics <: SpeciesDynamics{Voltage} end
 """
 currents should include synaptic current
 """
 function (b::BasicVoltageDynamics)(n::Neuron, vars, varnames, flux)
-    C = capacitance(n.geometry)
+    Cₘ, = get_parameters(b)
     V = vars[findfirst(x -> x == Voltage, varnames)]
-    return D(V) ~ (1 / C) * (flux)
+    return D(V) ~ (1 / Cₘ) * (flux)
 end
+get_parameters(::BasicVoltageDynamics) = @parameters Cₘ
+default_params(v::BasicVoltageDynamics, n::Neuron, vars, varnames) = Dict(get_parameters(v)... => capacitance(n.geometry))
 
+function get_from(d::Dict{DataType,SpeciesDynamics}, func)
+    muddled = d |> values .|> func |> x -> filter(y -> !isnothing(y), x)
+    isempty(muddled) && return Vector{Num}[]
+    return reduce(vcat, muddled)::Vector{Num}
+end
 
 struct LiuCalciumDynamics{T<:Number} <: SpeciesDynamics{Calcium}
     τCa::T
     Ca∞::T
     calc_multiplier::T # f * area = 14.96 * 0.0628
 end
-
 function (l::LiuCalciumDynamics)(n::Neuron, vars, varnames, currents)
+    τCa, Ca∞, f_times_area, Cₘ = get_parameters(l)
     Ca = vars[findfirst(x -> x == Calcium, varnames)]
-    C = capacitance(n.geometry)
-    D(Ca) ~ (1 / l.τCa) * (-Ca + l.Ca∞ + (l.calc_multiplier * currents / C))
+    D(Ca) ~ (1 / τCa) * (-Ca + Ca∞ + (f_times_area * currents / Cₘ))
 end
 
+get_parameters(::LiuCalciumDynamics) = @parameters τCa, Ca∞, CaFluxMultiplier, Cₘ
+default_params(l::LiuCalciumDynamics, n::Neuron, vars, varnames) = Dict(
+    get_parameters(l) .=> (l.τCa, l.Ca∞, l.calc_multiplier, capacitance(n.geometry))
+)
 
 struct LiuCaReversalDynamics <: SpeciesDynamics{Calcium} end
-
 function (l::LiuCaReversalDynamics)(n::Neuron, vars, varnames, currents)
     Ca = vars[findfirst(x -> x == Calcium, varnames)]
     ECa = vars[findfirst(x -> x == Reversal{Calcium}, varnames)]
@@ -274,13 +288,10 @@ function (l::LiuCaReversalDynamics)(n::Neuron, vars, varnames, currents)
 end
 
 
-"""
-get_parameters(dynamics) = ModelingToolkit.parameters to add 
-get_states(dynamics) (for dynamic equations that have more than one)
-provide defaults 
-
-In the end, this becomes like its own ODESystem like a channel
-"""
 
 
+
+# mapreduce(merge, (l, ll)) do s
+#     default_params(s, b, 1, 1)
+# end
 

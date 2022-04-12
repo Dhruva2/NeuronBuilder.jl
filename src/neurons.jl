@@ -112,11 +112,24 @@ function (b::BasicNeuron)(hooks::Integer)
     state_vars = tracked_vars[state_indices]
     state_defaults = Dict(tracked_vars[el] => b.somatic_parameters[tracked[el]] for el in state_indices)
 
+    somatic_states = get_from(b.dynamics, get_states)
+    somatic_state_defaults = mapreduce(merge, values(b.dynamics)) do s
+        default_states(s, b, 1, 1)
+    end
+
+    somatic_params = get_from(b.dynamics, get_parameters)
+    somatic_param_defaults = mapreduce(merge, values(b.dynamics)) do s
+        default_params(s, b, 1, 1)
+    end
+
     return ComponentSystem(b, ODESystem(
-        vcat(inward_connections, outward_connections[outward_connection_indices]),
-        t;
+        vcat(inward_connections[state_indices], outward_connections[outward_connection_indices]),
+        t,
+        vcat(state_vars, somatic_states),
+        somatic_params
+        ;
         systems=[ch.sys for ch in chs],
-        defaults=merge(state_defaults, parameter_defaults),
+        defaults=merge(state_defaults, parameter_defaults, somatic_state_defaults, somatic_param_defaults),
         name=b.name
     ) |> structural_simplify)
 end
