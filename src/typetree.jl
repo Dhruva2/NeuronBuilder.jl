@@ -1,7 +1,17 @@
+function merge_types(t1::Type, t2::Type)
+    ps = (type_ps(t1)..., type_ps(t2)...) |> unique
+    return Tuple{ps...}
+end
+
+function type_ps(t::Type)
+    isempty(t.parameters) && return (t,)
+    return t.parameters |> Tuple
+end
+
 ### Basic components and subtypes
 abstract type Species end
 abstract type Ion <: Species end
-abstract type AbstractIon <: Ion end
+abstract type PseudoIon <: Ion end
 
 """
 Not including voltage in tagging ion channels. Any flow channel. Flows are all charged particles. So they will always include voltage. Not going to consider flows of e.g. proteins
@@ -11,8 +21,8 @@ struct Sodium <: Ion end
 struct Potassium <: Ion end
 struct Calcium <: Ion end
 struct Proton <: Ion end
-struct Leak <: AbstractIon end
-abstract type Reversal{Ion} end
+struct Leak <: PseudoIon end
+abstract type Reversal{I<:Ion} end
 
 ionic(x) = x <: Ion
 export ionic
@@ -145,6 +155,11 @@ acts on FlowChannels. Changes their sensors. Changes their dynamics
 """
 abstract type PlasticityRule{S} end
 
+struct PlasticisedChannel{S,S2,A} <: FlowChannel{merge_types(Type{S}, Type{S2}),A}
+    channel::FlowChannel{S,A}
+    mutation::PlasticityRule{S2}
+end
+
 
 struct OLearyCalcRegulation{T} <: PlasticityRule{Calcium}
     τmRNA::T
@@ -159,7 +174,7 @@ make new componentsystem from old component system.
 - change the dynamics trying to access and set variables abstractly
 """
 function (o::OLearyCalcRegulation)(ch)
-    
+
 
     sys = ch.sys
     gparam = parameters(ch.sys)
@@ -168,8 +183,8 @@ function (o::OLearyCalcRegulation)(ch)
 
 
     newname = Symbol(ch.sys.name, :_regulated)
-    sys = alias_elimination(extend(ch.sys, regul_sys; name = newname))
-    return ComponentSystem(ch,sys)
+    sys = alias_elimination(extend(ch.sys, regul_sys; name=newname))
+    return ComponentSystem(ch, sys)
 end
 
 struct Soma{F<:AbstractFloat} <: Compartment
@@ -315,14 +330,4 @@ function (l::PrinzCaReversalDynamics)(n::Neuron, vars, varnames, currents)
     ECa = vars[findfirst(x -> x == Reversal{Calcium}, varnames)]
     return ECa ~ (500.0) * (8.6174e-5) * (283.15) * (log(max((3000.0 / Ca), 0.001)))
 end
-"""
-get_parameters(dynamics) = ModelingToolkit.parameters to add 
-get_states(dynamics) (for dynamic equations that have more than one)
-provide defaults 
-
-
-
-# mapreduce(merge, (l, ll)) do s
-#     default_params(s, b, 1, 1)
-# end
 
