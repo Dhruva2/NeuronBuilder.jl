@@ -1,7 +1,8 @@
+"""
+Liu bursting neuron script
+"""
 
-
-
-
+using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
 
 const Area = 0.0628 # Prinz/Liu 0.0628 mm2
 const Cm = 10.0 # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
@@ -14,11 +15,9 @@ channels = [Liu.Na(700.0 * Liu_conv), Liu.CaS(4.0 * Liu_conv), Liu.CaT(2.0 * Liu
 τCa = 20.0
 Ca∞ = 0.05
 
-# Dict(:ENa => 50.0, :EH => -20.0, :EK => -80.0, :ELeak => -50.0)
-
-
 defaults = Dict(Voltage => BasicVoltageDynamics(),
-    Calcium => LiuCalciumDynamics(τCa, Ca∞, 14.96 * 0.0628), Reversal{Calcium} => LiuCaReversalDynamics())
+    Calcium => LiuCalciumDynamics(τCa, Ca∞, 14.96 * 0.0628), 
+    Reversal{Calcium} => LiuCaReversalDynamics())
 
 somatic_parameters = Dict(
     Reversal{Sodium} => 50.0,
@@ -31,18 +30,9 @@ somatic_parameters = Dict(
 
 b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, channels, :test_Liu)
 
-
 neur = b(0)
-
 
 prob = ODEProblem(neur.sys, [], (0.0, 5000.0), [])
 
 sol = solve(prob, Tsit5())
-
-"""
-What do i need to do:
-
-change variables from dynamics() , eg Cm, to be parameters
-synapses
-
-"""
+plot(sol)

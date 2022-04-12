@@ -138,11 +138,10 @@ abstract type CalciumChannel <: IonChannel end
 ### 
 
 
-
 abstract type RegIonChannel <: Component end # delete eventually
 
 """
-acts on FlowChannels. Changes their sensors and actuators. Changes their dynamics
+acts on FlowChannels. Changes their sensors. Changes their dynamics
 """
 abstract type PlasticityRule{S} end
 
@@ -159,8 +158,18 @@ make new componentsystem from old component system.
 - flatten the namespace so that there is just one system, not plasticityrulesystem.channel_system
 - change the dynamics trying to access and set variables abstractly
 """
-function (o::OLearyCalcRegulation)()
+function (o::OLearyCalcRegulation)(ch)
+    
 
+    sys = ch.sys
+    gparam = parameters(ch.sys)
+    RHS = ch.sys.observed[1].rhs
+    LHS = ch.sys.observed[1].lhs
+
+
+    newname = Symbol(ch.sys.name, :_regulated)
+    sys = alias_elimination(extend(ch.sys, regul_sys; name = newname))
+    return ComponentSystem(ch,sys)
 end
 
 struct Soma{F<:AbstractFloat} <: Compartment
@@ -273,7 +282,25 @@ function (l::LiuCaReversalDynamics)(n::Neuron, vars, varnames, currents)
     return ECa ~ (500.0) * (8.6174e-5) * (283.15) * (log(max((3000.0 / Ca), 0.001)))
 end
 
+struct PrinzCalciumDynamics{T<:Number} <: SpeciesDynamics{Calcium}
+    τCa::T
+    Ca∞::T
+    calc_multiplier::T # f * area = 14.96 * 0.0628
+end
 
+function (p::PrinzCalciumDynamics)(n::Neuron, vars, varnames, currents)
+    Ca = vars[findfirst(x -> x == Calcium, varnames)]
+    C = capacitance(n.geometry)
+    D(Ca) ~ (1 / p.τCa) * (-Ca + p.Ca∞ + (p.calc_multiplier * currents / C))
+end
+
+struct PrinzCaReversalDynamics <: SpeciesDynamics{Calcium} end
+
+function (l::PrinzCaReversalDynamics)(n::Neuron, vars, varnames, currents)
+    Ca = vars[findfirst(x -> x == Calcium, varnames)]
+    ECa = vars[findfirst(x -> x == Reversal{Calcium}, varnames)]
+    return ECa ~ (500.0) * (8.6174e-5) * (283.15) * (log(max((3000.0 / Ca), 0.001)))
+end
 """
 get_parameters(dynamics) = ModelingToolkit.parameters to add 
 get_states(dynamics) (for dynamic equations that have more than one)

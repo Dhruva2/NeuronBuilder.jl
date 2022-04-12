@@ -8,7 +8,7 @@
 function build_network(nodefn, edgefn, num_nodes; name=:network)
     eqs = Array{Equation,1}(undef, 0)
     neurons = [nodefn(j)(in_degree(edgefn, num_nodes, j)) for j in 1:num_nodes]
-    network = ODESystem(eqs, t, [], []; name=name, systems=[el.ODESystem for el in neurons])
+    network = ODESystem(eqs, t, [], []; name=name, systems=[el.sys for el in neurons])
     fill_counter = ones(Int64, num_nodes)
     for i = 1:num_nodes
         for j = 1:num_nodes

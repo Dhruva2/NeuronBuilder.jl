@@ -10,7 +10,7 @@ include("typetree.jl")
 export Synapse, IonChannel, RegIonChannel, RegIon, Soma, Compartment, Component, ComponentSystem, Liu_conversion, Prinz_conversion, syn_conv_factor, EmptyConnection
 
 export Voltage, Ion, Sodium, Potassium, Calcium, Proton, Leak, Reversal, Species
-export FlowChannel, FlowDynamics, BasicVoltageDynamics, LiuCalciumDynamics, LiuCaReversalDynamics
+export FlowChannel, FlowDynamics, BasicVoltageDynamics, LiuCalciumDynamics, LiuCaReversalDynamics, PrinzCalciumDynamics, PrinzCaReversalDynamics
 export ions
 
 export Injection
@@ -47,6 +47,7 @@ export Prinz
 
 include("assets/Prinz2/Prinz2.jl")
 using .Prinz2
+import .Prinz2
 export Prinz2
 
 include("synapses.jl")

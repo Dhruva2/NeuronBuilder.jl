@@ -112,13 +112,14 @@ function (b::BasicNeuron)(hooks::Integer)
     state_vars = tracked_vars[state_indices]
     state_defaults = Dict(tracked_vars[el] => b.somatic_parameters[tracked[el]] for el in state_indices)
 
-    return ComponentSystem(b, ODESystem(
+    sys = ODESystem(
         vcat(inward_connections, outward_connections[outward_connection_indices]),
         t;
         systems=[ch.sys for ch in chs],
         defaults=merge(state_defaults, parameter_defaults),
         name=b.name
-    ) |> structural_simplify)
+    )
+    return ComponentSystem(b, (hooks==0) ? structural_simplify(sys) : sys)
 end
 
 # |> ch -> filter(x -> x.rhs !== nothing, ch)

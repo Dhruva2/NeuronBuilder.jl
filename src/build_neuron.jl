@@ -134,8 +134,8 @@ function add_connection(group, pre, post, syn::EmptyConnection; kwargs...)
 end
 
 function add_connection(group, pre_n, post_n, syn::Synapse; name=ModelingToolkit.getname(group), i=1)
-    pre = pre_n.ODESystem
-    post = post_n.ODESystem
+    pre = pre_n.sys
+    post = post_n.sys
     prename, postname = ModelingToolkit.getname.([pre, post])
     synapse_sys = syn(; name=Symbol(prename, :to, postname, get_name(syn)))
 
