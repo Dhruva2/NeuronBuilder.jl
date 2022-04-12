@@ -1,10 +1,14 @@
 module NeuronBuilder
 
 using ModelingToolkit
+using Unitful
 
 const t = Num(Sym{Real}(:t))
 const D = Differential(t)
 export t, D
+
+include("units.jl")
+export Cm, Area, ICS, Params, Reversals
 
 include("channel_types.jl")
 export Synapse, IonChannel, RegIonChannel, RegIon, Soma, Compartment, Component, ComponentSystem, Liu_conversion, Prinz_conversion, syn_conv_factor, EmptyConnection
