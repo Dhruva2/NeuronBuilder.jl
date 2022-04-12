@@ -68,7 +68,6 @@ sensedvars(i::FlowChannel) =
         Symbol(thing |> shorthand_name)
     end
 
-
 reversals(i::FlowChannel) =
     map(actuated(i)) do thing
         Symbol(:E, shorthand_name(thing))
@@ -141,7 +140,28 @@ abstract type CalciumChannel <: IonChannel end
 
 
 abstract type RegIonChannel <: Component end # delete eventually
-abstract type PlasticityRule <: Component end
+
+"""
+acts on FlowChannels. Changes their sensors and actuators. Changes their dynamics
+"""
+abstract type PlasticityRule{S} end
+
+
+struct OLearyCalcRegulation{T} <: PlasticityRule{Calcium}
+    τmRNA::T
+    τg::T
+end
+
+"""
+make new componentsystem from old component system.
+- add sensors, e,g, Calcium
+- make an augmented name like cas_regulated <= cas.
+- flatten the namespace so that there is just one system, not plasticityrulesystem.channel_system
+- change the dynamics trying to access and set variables abstractly
+"""
+function (o::OLearyCalcRegulation)()
+
+end
 
 struct Soma{F<:AbstractFloat} <: Compartment
     initial_states::Dict{Symbol,F}
@@ -252,6 +272,15 @@ function (l::LiuCaReversalDynamics)(n::Neuron, vars, varnames, currents)
     ECa = vars[findfirst(x -> x == Reversal{Calcium}, varnames)]
     return ECa ~ (500.0) * (8.6174e-5) * (283.15) * (log(max((3000.0 / Ca), 0.001)))
 end
+
+
+"""
+get_parameters(dynamics) = ModelingToolkit.parameters to add 
+get_states(dynamics) (for dynamic equations that have more than one)
+provide defaults 
+
+In the end, this becomes like its own ODESystem like a channel
+"""
 
 
 

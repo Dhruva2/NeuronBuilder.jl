@@ -45,6 +45,10 @@ include("assets/Prinz/Prinz.jl")
 using .Prinz
 export Prinz
 
+include("assets/Prinz2/Prinz2.jl")
+using .Prinz2
+export Prinz2
+
 include("synapses.jl")
 include("regulation.jl")
 export Regulated

@@ -1,15 +1,10 @@
-
-
-
-
-
 const Area = 0.0628 # Prinz/Liu 0.0628 mm2
 const Cm = 10.0 # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
 
-Liu_conv = Cm
+Prinz_conv = Cm / Area
 
-channels = [Liu.Na(700.0 * Liu_conv), Liu.CaS(4.0 * Liu_conv), Liu.CaT(2.0 * Liu_conv), Liu.Ka(50.0 * Liu_conv), Liu.KCa(40.0 * Liu_conv),
-    Liu.Kdr(70.0 * Liu_conv), Liu.H(0.03 * Liu_conv), Liu.leak(0.01 * Liu_conv)]
+channels = [Prinz.Na(100 * Prinz_conv), Prinz.CaS(6 * Prinz_conv), Prinz.CaT(2.5 * Prinz_conv), Prinz.H(0.01 * Prinz_conv),
+    Prinz.Ka(50 * Prinz_conv), Prinz.KCa(5 * Prinz_conv), Prinz.Kdr(100 * Prinz_conv), Prinz.Leak(0.0)]
 
 τCa = 20.0
 Ca∞ = 0.05
@@ -30,4 +25,3 @@ neur = b(0)
 prob = ODEProblem(neur.sys, [], (0.0, 1000.0), [])
 
 sol = solve(prob, Tsit5())
-

@@ -14,7 +14,7 @@ include("channels.jl")
 
 export channel_dynamics, ionic_current, ionic_conductance, calcium_current, external_params
 
-export CalciumFlow, IonicConductance, IonicCurrent
+
 end
 
 """
