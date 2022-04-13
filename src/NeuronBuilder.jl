@@ -14,7 +14,7 @@ export FlowChannel, FlowDynamics, BasicVoltageDynamics, LiuCalciumDynamics, LiuC
 export ions
 
 export Injection
-export PlasticityRule
+export PlasticityRule, PlasticisedChannel
 
 export ComponentInfo, IonicConductances, Flows, IonicCurrents, CalciumFlows, ExternalHooks, InstantiateVariables, Reversal
 

@@ -9,6 +9,14 @@ function get_name(ch::Component)
     Base.typename(ch |> typeof).name |> Symbol
 end
 
+function get_name(p::PlasticisedChannel)
+    Symbol(
+        get_name(p.channel),
+        :_with_,
+        get_name(p.mutation)
+    )
+end
+
 calcium_current(c::IonChannel, s::ODESystem) = Num(0)
 voltage_hook(V, cs) = V ~ cs.sys.V
 calcium_hook(Ca, cs) = Ca ~ cs.sys.Ca

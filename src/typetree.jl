@@ -155,16 +155,35 @@ acts on FlowChannels. Changes their sensors. Changes their dynamics
 """
 abstract type PlasticityRule{S} end
 
+
+function get_index(sys::AbstractTimeDependentSystem, name,)
+
+end
+
 struct PlasticisedChannel{S,S2,A} <: FlowChannel{merge_types(Type{S}, Type{S2}),A}
     channel::FlowChannel{S,A}
     mutation::PlasticityRule{S2}
 end
 
+"""
+Extra sensors: calcium
+extra parameters: τmRNa
+replace conductance parameter with a state
+give that state dynamics:
 
+Differential(t)(gNa(t)) ~ (mRna_Na(t) - gNa(t)) / τg
+Differential(t)(mRna_Na(t)) ~ (Ca_tgt - Ca(t)) / τNa
+
+Auxiliary: makes mrna name: channel name + mRna
+
+τch = 
+
+"""
 struct OLearyCalcRegulation{T} <: PlasticityRule{Calcium}
     τmRNA::T
     τg::T
 end
+export OLearyCalcRegulation
 
 """
 make new componentsystem from old component system.
@@ -173,19 +192,36 @@ make new componentsystem from old component system.
 - flatten the namespace so that there is just one system, not plasticityrulesystem.channel_system
 - change the dynamics trying to access and set variables abstractly
 """
-function (o::OLearyCalcRegulation)(ch)
 
 
-    sys = ch.sys
-    gparam = parameters(ch.sys)
-    RHS = ch.sys.observed[1].rhs
-    LHS = ch.sys.observed[1].lhs
 
+# function (o::OLearyCalcRegulation)(ch::FlowChannel, n::Neuron)
+#     sys = ch().sys
+#     _eqs, _states, _parameters, _defaults, _observed = map(
+#         (equations, states, parameters, ModelingToolkit.get_defaults, observed)) do f
+#         f(sys)
+#     end
 
-    newname = Symbol(ch.sys.name, :_regulated)
-    sys = alias_elimination(extend(ch.sys, regul_sys; name=newname))
-    return ComponentSystem(ch, sys)
-end
+#     old_conductances = getproperty(sys, conductances(ch)...; namespace=false)
+#     var_conductances = instantiate_variables(ch, conductances)
+
+#     # potential bug to fix: only works for a single element of conducts
+#     _param_indxs = findall(x -> isequal(old_conductances, x), _parameters)
+
+#     ## turn conductances into variables
+#     substitution = Dict(_parameters[_param_indxs]... .=> var_conductances...)
+#     new_eqs = [substitute(eq, substitution) for eq in sys.eqs]
+
+#     @variables mRNA(t)
+#     @parameters τmRNA, Ca_tgt, τg
+
+#     extended_eqs = [D(mRNA) ~ ]
+#     vcat(
+#         new_eqs,
+#     )
+
+#     return ODESystem(new_eqs, t, new_states, new_params; observed=SOMETHIGN, defaults=new_defaultmap, name=something)
+# end
 
 struct Soma{F<:AbstractFloat} <: Compartment
     initial_states::Dict{Symbol,F}
