@@ -55,3 +55,11 @@ function channel_dynamics(ch::Glut, Vpre, Vpost)
     defaultmap = [s => ch.s, ḡGlut => ch.ḡGlut]
     return eqs, states, parameters, current, defaultmap
 end
+
+function (syn::Synapse)(; name=get_name(syn))
+    @variables Vpre(t) Vpost(t)
+    eqs, states, parameters, current, defaultmap = channel_dynamics(syn, Vpre, Vpost)
+    sys = ODESystem(eqs, t, [Vpre, Vpost, states...], [parameters...]; observed=current,
+        name=name, defaults=defaultmap)
+    return ComponentSystem(syn, sys)
+end

@@ -3,17 +3,12 @@ module Liu
 using ModelingToolkit
 using ..NeuronBuilder
 
-import ..channel_dynamics, ..ionic_current, ..calcium_current, ..external_params, ..flow_variables
-
-import ..ions
-import ..reversals, ..currents, ..conductances
-
-# import ..Flows, ..InstantiateVariables, ..IonicCurrent
+import ..get_parameters, ..get_states, ..default_params, ..default_states
 
 include("channels.jl")
+include("calc_dynamics.jl")
 
-export channel_dynamics, ionic_current, ionic_conductance, calcium_current, external_params
-
+export get_parameters, get_states, default_params, default_states
 
 end
 

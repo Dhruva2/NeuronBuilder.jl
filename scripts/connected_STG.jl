@@ -1,10 +1,10 @@
-# ```
+# """
 # Running the STG network 
 # - For units to check out, synapses also get a conversion factor.
 # - The group of neurons and their connections is an `ODESystem` on which we do `structural_simplify(grp)` to eliminate redundant variables. 
 # - The names of the variables in the system can be listed with `@show grp.states`. The problem that then takes this system is a regular `ODEProblem`.
 # - You can plot variables by their names with plot(sol;  vars = [STG.AB₊V]). 
-# ```
+# """
 using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
 
 #Using parameters from Prinz (2004) Similar network activity from disparate circuit parameters
@@ -13,15 +13,15 @@ using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
 const Area = 0.0628 # Prinz/Liu 0.0628 mm2
 const Cm = 10.0 # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
 
-Prinz2_conv = Cm / Area
+Prinz_conv = Cm / Area
 synaptic_conv = 1e-3 / Area^2 #this gives μS/mm^2 
 
 τCa = 200.0
 Ca∞ = 0.05
 
 defaults = Dict(Voltage => BasicVoltageDynamics(),
-    Calcium => PrinzCalciumDynamics(τCa, Ca∞, 14.96 * 0.0628),
-    Reversal{Calcium} => PrinzCaReversalDynamics())
+    Calcium => Prinz.CalciumDynamics(τCa, Ca∞, 14.96 * 0.0628),
+    Reversal{Calcium} => Prinz.CaReversalDynamics())
 
 somatic_parameters = Dict(
     Reversal{Sodium} => 50.0,
@@ -33,20 +33,20 @@ somatic_parameters = Dict(
     Reversal{Calcium} => 0.0)
 
 function AB_Neuron(num_connections)
-    AB2_ch = [Prinz2.Na(100.0 * Prinz2_conv), Prinz2.CaS(6.0 * Prinz2_conv), Prinz2.CaT(2.5 * Prinz2_conv), Prinz2.H(0.01 * Prinz2_conv), Prinz2.Ka(50.0 * Prinz2_conv), Prinz2.KCa(5.0 * Prinz2_conv), Prinz2.Kdr(100.0 * Prinz2_conv), Prinz2.leak(0.0 * Prinz2_conv)]
+    AB2_ch = [Prinz.Na(100.0 * Prinz_conv), Prinz.CaS(6.0 * Prinz_conv), Prinz.CaT(2.5 * Prinz_conv), Prinz.H(0.01 * Prinz_conv), Prinz.Ka(50.0 * Prinz_conv), Prinz.KCa(5.0 * Prinz_conv), Prinz.Kdr(100.0 * Prinz_conv), Prinz.leak(0.0 * Prinz_conv)]
     b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, AB2_ch, :AB)
     return b(num_connections)
 end
 
 function PY_Neuron(num_connections)
-    PY1_ch = [Prinz2.Na(100.0 * Prinz2_conv), Prinz2.CaS(2.0 * Prinz2_conv), Prinz2.CaT(2.4 * Prinz2_conv), Prinz2.H(0.05 * Prinz2_conv), Prinz2.Ka(50.0 * Prinz2_conv), Prinz2.KCa(0.0 * Prinz2_conv), Prinz2.Kdr(125.0 * Prinz2_conv), Prinz2.leak(0.01 * Prinz2_conv)]
+    PY1_ch = [Prinz.Na(100.0 * Prinz_conv), Prinz.CaS(2.0 * Prinz_conv), Prinz.CaT(2.4 * Prinz_conv), Prinz.H(0.05 * Prinz_conv), Prinz.Ka(50.0 * Prinz_conv), Prinz.KCa(0.0 * Prinz_conv), Prinz.Kdr(125.0 * Prinz_conv), Prinz.leak(0.01 * Prinz_conv)]
     somatic_parameters[Voltage] = -55.0
     b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, PY1_ch, :PY)
     return b(num_connections)
 end
 
 function LP_Neuron(num_connections)
-    LP4_ch = [Prinz2.Na(100.0 * Prinz2_conv), Prinz2.CaS(4.0 * Prinz2_conv), Prinz2.CaT(0.0 * Prinz2_conv), Prinz2.H(0.05 * Prinz2_conv), Prinz2.Ka(20.0 * Prinz2_conv), Prinz2.KCa(0.0 * Prinz2_conv), Prinz2.Kdr(25.0 * Prinz2_conv), Prinz2.leak(0.03 * Prinz2_conv)]
+    LP4_ch = [Prinz.Na(100.0 * Prinz_conv), Prinz.CaS(4.0 * Prinz_conv), Prinz.CaT(0.0 * Prinz_conv), Prinz.H(0.05 * Prinz_conv), Prinz.Ka(20.0 * Prinz_conv), Prinz.KCa(0.0 * Prinz_conv), Prinz.Kdr(25.0 * Prinz_conv), Prinz.leak(0.03 * Prinz_conv)]
     somatic_parameters[Voltage] = -65.0
     b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, LP4_ch, :LP)
     return b(num_connections)
@@ -88,22 +88,3 @@ prob = ODEProblem(stg, [], tspan, [])
 @time sol = solve(prob, AutoTsit5(Rosenbrock23()))
 
 plot(sol, xlims=(5000, 10000), ylims=(-80, 70); vars=[stg.AB₊V, stg.LP₊V, stg.PY₊V], layout=(3, 1))
-
-
-# #Synapses 
-# ABLP_chol = Chol(30.0 * synaptic_conv)
-# ABPY_chol = Chol(3.0 * synaptic_conv)
-# ABLP_glut = Glut(30.0 * synaptic_conv)
-# ABPY_glut = Glut(10.0 * synaptic_conv)
-
-# LPAB_glut = Glut(30.0 * synaptic_conv)
-# LPPY_glut = Glut(1.0 * synaptic_conv)
-# PYLP_glut = Glut(30.0 * synaptic_conv)
-
-# grp = add_connection(grp, AB, LP, ABLP_chol; i=1)
-# grp = add_connection(grp, AB, LP, ABLP_glut; i=2)
-# grp = add_connection(grp, PY, LP, PYLP_glut; i=3)
-# grp = add_connection(grp, LP, AB, LPAB_glut; i=1)
-# grp = add_connection(grp, LP, PY, LPPY_glut; i=1)
-# grp = add_connection(grp, AB, PY, ABPY_glut; i=2)
-# grp = add_connection(grp, AB, PY, ABPY_chol; i=3)

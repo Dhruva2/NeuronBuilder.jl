@@ -14,10 +14,11 @@ channels = [Liu.Na(700.0 * Liu_conv), Liu.CaS(4.0 * Liu_conv), Liu.CaT(2.0 * Liu
 
 τCa = 20.0
 Ca∞ = 0.05
+fxarea = 14.96 * 0.0628
 
 defaults = Dict(Voltage => BasicVoltageDynamics(),
-    Calcium => LiuCalciumDynamics(τCa, Ca∞, 14.96 * 0.0628), 
-    Reversal{Calcium} => LiuCaReversalDynamics())
+    Calcium => Liu.CalciumDynamics(τCa, Ca∞, fxarea), 
+    Reversal{Calcium} => Liu.CaReversalDynamics())
 
 somatic_parameters = Dict(
     Reversal{Sodium} => 50.0,

@@ -1,4 +1,3 @@
-abstract type Specification end
 
 # struct Neuron{C<:Component, S<:Soma,OS<:ODESystem}
 #     soma::S
@@ -8,13 +7,20 @@ abstract type Specification end
 #     ODESystem::OS
 # end
 
-
 # Neuron(a, b, c, d) = Neuron(a, b, c, d, build_neuron(a, b, c, d))
 # Neuron(s, t) = Neuron(s, t, 0, :unidentified_neuron)
 # Neuron(n::Neuron, new_hooks::Integer) = Neuron(n.soma, n.channels, new_hooks, n.name)
 
 
-# Iterators.flatten(reversals.(channels)) |> unique
+struct BasicVoltageDynamics <: SpeciesDynamics{Voltage} end
+
+function (b::BasicVoltageDynamics)(n::Neuron, vars, varnames, flux)
+    Cₘ, = get_parameters(b)
+    V = vars[findfirst(x -> x == Voltage, varnames)]
+    return D(V) ~ (1 / Cₘ) * (flux)
+end
+get_parameters(::BasicVoltageDynamics) = @parameters Cₘ
+default_params(v::BasicVoltageDynamics, n::Neuron, vars, varnames) = Dict(get_parameters(v)... => capacitance(n.geometry))
 
 
 """
@@ -42,7 +48,7 @@ LiuNeuron(d, vc, h, name) = BasicNeuron(NoGeometry(), d, vc, h, name)
 
 
 function (b::BasicNeuron)(hooks::Integer)
-
+    # DO LATER: to make it easier for the user, add an extra input which is var (the var in question). so they dont have to find eg voltage by searching through vars and varnames
     # if F ∉ b.dynamics, return x->0. else return Fdynamics(neur, var, rhs)
     dynamics(F, neur, vars, varnames, RHS) =
         get(neur.dynamics, F) do
@@ -50,7 +56,7 @@ function (b::BasicNeuron)(hooks::Integer)
         end(neur, vars, varnames, RHS)
 
 
-    # track every species sensed by the connected channels
+    # track every species and reversals sensed by the connected channels
     tracked = vcat(Voltage, b.channels .|> sensed |> Iterators.flatten |> unique)
 
     # build state variables for each of these tracked species 
@@ -95,8 +101,7 @@ function (b::BasicNeuron)(hooks::Integer)
 
     ## ie add currents and inputs to the dynamics of tracked variables
     inward_connections = [
-        dynamics(species, b, tracked_vars, tracked, flux) for (var, flux, species) in zip(tracked_vars, tracked_fluxes, tracked)
-    ] |> y -> filter(x -> !isnothing(x), y)
+        dynamics(species, b, tracked_vars, tracked, flux) for (flux, species) in zip(tracked_fluxes, tracked)]
 
     incorrect_indices = findall(outward_connections) do el
         ModelingToolkit.isparameter(el.rhs)
@@ -114,12 +119,12 @@ function (b::BasicNeuron)(hooks::Integer)
 
     somatic_states = get_from(b.dynamics, get_states)
     somatic_state_defaults = mapreduce(merge, values(b.dynamics)) do s
-        default_states(s, b, 1, 1)
+        default_states(s, b, tracked_vars, tracked)
     end
 
     somatic_params = get_from(b.dynamics, get_parameters)
     somatic_param_defaults = mapreduce(merge, values(b.dynamics)) do s
-        default_params(s, b, 1, 1)
+        default_params(s, b, tracked_vars, tracked)
     end
 
     sys = ODESystem(
@@ -132,7 +137,7 @@ function (b::BasicNeuron)(hooks::Integer)
         defaults=merge(state_defaults, parameter_defaults, somatic_state_defaults, somatic_param_defaults),
         name=b.name
     )
-    return ComponentSystem(b, (hooks==0) ? structural_simplify(sys) : sys)
+    return ComponentSystem(b, (hooks == 0) ? structural_simplify(sys) : sys)
 end
 
 # |> ch -> filter(x -> x.rhs !== nothing, ch)

@@ -25,13 +25,6 @@ function (ch::RegIonChannel)()
     return ComponentSystem(ch, sys)
 end
 
-function (syn::Synapse)(; name=get_name(syn))
-    @variables Vpre(t) Vpost(t)
-    eqs, states, parameters, current, defaultmap = channel_dynamics(syn, Vpre, Vpost)
-    sys = ODESystem(eqs, t, [Vpre, Vpost, states...], [parameters...]; observed=current,
-        name=name, defaults=defaultmap)
-    return ComponentSystem(syn, sys)
-end
 
 function build_new_neuron(comp::Soma, channels::Vector{Component}, hooks::Integer, name::Symbol)
     # add warning labeling each requirement that isn't included
@@ -128,29 +121,3 @@ end
 Issue: need to do all connections in one ḡChol
 
 """
-
-function add_connection(group, pre, post, syn::EmptyConnection; kwargs...)
-    return group
-end
-
-function add_connection(group, pre_n, post_n, syn::Synapse; name=ModelingToolkit.getname(group), i=1)
-    pre = pre_n.sys
-    post = post_n.sys
-    prename, postname = ModelingToolkit.getname.([pre, post])
-    synapse_sys = syn(; name=Symbol(prename, :to, postname, get_name(syn)))
-
-    oldeqs = ModelingToolkit.get_eqs(group)
-    neweqs = [
-        get_pre(syn, pre) ~ my_pre(synapse_sys),
-        get_post(syn, post) ~ my_post(synapse_sys),
-        syn_current(syn, synapse_sys.sys) ~ getproperty(post, Symbol(post_connector(syn), i))
-    ]
-
-    eqs = cat(oldeqs, neweqs, dims=1)
-    systems = cat(ModelingToolkit.get_systems(group), synapse_sys.sys, dims=1)
-
-    return connected = ODESystem(eqs, t, [], [];
-        name=name,
-        systems=systems)
-end
-
