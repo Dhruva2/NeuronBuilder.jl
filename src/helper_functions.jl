@@ -20,6 +20,7 @@ shorthand_name(::Type{Calcium}) = :Ca
 shorthand_name(::Type{Proton}) = :H
 shorthand_name(::Type{Leak}) = :Leak
 shorthand_name(::Type{Reversal{T}}) where {T} = Symbol(:E, shorthand_name(T))
+shorthand_name(x::Type{Tuple{T,R}}) where{T,R} = shorthand_name.(x.types)
 
 sensed(::FlowChannel{S,A}) where {S<:Tuple,A} = fieldtypes(S)
 actuated(::FlowChannel{S,A}) where {S,A<:Tuple} = fieldtypes(A)

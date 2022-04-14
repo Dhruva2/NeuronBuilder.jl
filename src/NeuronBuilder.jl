@@ -34,7 +34,7 @@ include("build_network.jl")
 export build_network
 
 include("plasticity.jl")
-export OLearyCalcRegulation
+export OLeary_reg
 
 
 end

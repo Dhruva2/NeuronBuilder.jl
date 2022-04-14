@@ -60,11 +60,12 @@ function (b::BasicNeuron)(hooks::Integer)
     tracked = vcat(Voltage, b.channels .|> sensed |> Iterators.flatten |> unique)
 
     # build state variables for each of these tracked species 
-    tracked_vars = tracked .|> shorthand_name |> instantiate_variables
+    tracked_vars = reduce(vcat, tracked .|> shorthand_name) |> instantiate_variables
 
 
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:hooks]]
     my_sum(syns) = hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
+    !(hooks == 0) && (syns = reduce(vcat, syns))
     chs = [ch() for ch in b.channels]
 
 
@@ -130,7 +131,7 @@ function (b::BasicNeuron)(hooks::Integer)
     sys = ODESystem(
         vcat(inward_connections[state_indices], outward_connections[outward_connection_indices]),
         t,
-        vcat(state_vars, somatic_states),
+        vcat(state_vars, somatic_states,syns),
         somatic_params
         ;
         systems=[ch.sys for ch in chs],
