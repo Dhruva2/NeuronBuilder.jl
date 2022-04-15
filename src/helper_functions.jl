@@ -13,20 +13,9 @@ function get_name(p::PlasticisedChannel)
     )
 end
 
-shorthand_name(::Type{Voltage}) = :V
-shorthand_name(::Type{Sodium}) = :Na
-shorthand_name(::Type{Potassium}) = :K
-shorthand_name(::Type{Calcium}) = :Ca
-shorthand_name(::Type{Proton}) = :H
-shorthand_name(::Type{Leak}) = :Leak
-shorthand_name(::Type{Reversal{T}}) where {T} = Symbol(:E, shorthand_name(T))
-shorthand_name(x::Type{Tuple{T,R}}) where{T,R} = shorthand_name.(x.types)
 
-sensed(::FlowChannel{S,A}) where {S<:Tuple,A} = fieldtypes(S)
-actuated(::FlowChannel{S,A}) where {S,A<:Tuple} = fieldtypes(A)
 
-sensed(::FlowChannel{S,A}) where {S,A} = (S,)
-actuated(::FlowChannel{S,A}) where {S,A} = (A,)
+
 
 
 sensedvars(i::FlowChannel) =
@@ -101,3 +90,19 @@ function get_from(d::Dict{DataType,SpeciesDynamics}, func)
 end
 
 #isLeak(c::IonChannel) = typeof(c) in [NeuronBuilder.Liu.Leak{Float64}, NeuronBuilder.Prinz.Leak{Float64}]
+
+function testsensed(::FlowChannel{S,A}) where {S,A}
+    isempty(fieldtypes(S)) && return S
+
+    els = []
+    remaining = fieldtypes(S)
+    while !isempty(remaining)
+        for el in remaining
+            isempty(fieldtypes) && push!(els, el)
+        end
+        filter(x -> !isempty(x), fieldtypes(remaining))
+    end
+end
+
+
+

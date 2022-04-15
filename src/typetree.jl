@@ -15,12 +15,22 @@ struct Proton <: Ion end
 struct Leak <: PseudoIon end
 abstract type Reversal{I<:Ion} end
 
+shorthand_name(::Type{Voltage}) = :V
+shorthand_name(::Type{Sodium}) = :Na
+shorthand_name(::Type{Potassium}) = :K
+shorthand_name(::Type{Calcium}) = :Ca
+shorthand_name(::Type{Proton}) = :H
+shorthand_name(::Type{Leak}) = :Leak
+shorthand_name(::Type{Reversal{T}}) where {T} = Symbol(:E, shorthand_name(T))
+shorthand_name(x::Type{Tuple{T,R}}) where {T,R} = shorthand_name.(x.types)
+
+
 ionic(x) = x <: Ion
 export ionic
 
 abstract type Component end
 abstract type Compartment <: Component end
-abstract type FlowChannel{Sensors,Actuators} <: Component end
+abstract type FlowChannel{Sensors<:Tuple,Actuators<:Tuple} <: Component end
 
 abstract type Neuron <: Compartment end
 
@@ -34,8 +44,20 @@ end
 
 ### channels always sense the reversal of the currents they actuate
 # generalize for more than actuator
-FlowChannel(T) = FlowChannel{Reversal{T},T}
-FlowChannel(S, A) = FlowChannel{Tuple{S,Reversal{A}},A}
+FlowChannel(T) = FlowChannel{Tuple{Reversal{T}},Tuple{T}}
+FlowChannel(S, A) = FlowChannel{Tuple{S,Reversal{A}},Tuple{A}}
+
+sensed(::FlowChannel{S,A}) where {S,A} = typeflatten(S)
+actuated(::FlowChannel{S,A}) where {S,A} = typeflatten(A)
+
+function typeflatten(s::DataType)
+    map(fieldtypes(s)) do el
+        el <: Tuple && return testsensed(el)
+        return (el,)
+    end |> Iterators.flatten |> collect |> unique!
+end
+
+
 
 abstract type Geometry end
 struct NoGeometry{C} <: Geometry
@@ -44,17 +66,7 @@ end
 capacitance(g::NoGeometry) = g.capacitance
 
 abstract type PlasticityRule{S} end
-
-function type_ps(t::Type)
-    isempty(t.parameters) && return (t,)
-    return t.parameters |> Tuple
-end
-function merge_types(t1::Type, t2::Type)
-    ps = (type_ps(t1)..., type_ps(t2)...) |> unique
-    return Tuple{ps...}
-end
-
-struct PlasticisedChannel{S,S2,A} <: FlowChannel{merge_types(Type{S}, Type{S2}),A}
+struct PlasticisedChannel{S,S2,A} <: FlowChannel{Tuple{S, S2},A}
     channel::FlowChannel{S,A}
     mutation::PlasticityRule{S2}
 end
