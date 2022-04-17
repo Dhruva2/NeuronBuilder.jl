@@ -13,26 +13,26 @@ function get_name(p::PlasticisedChannel)
     )
 end
 
-_voltage(el) = (Voltage,)
+voltage(el) = (Voltage,)
 
-_currents(i::FlowChannel) =
+currents(i::FlowChannel) =
     map(filter(ionic, actuated(i))) do thing
         Current{thing}
     end
 
-_reversals(i::FlowChannel) =
+reversals(i::FlowChannel) =
     map(filter(ionic, actuated(i))) do thing
         Reversal{thing}
     end
 
-_conductances(i::FlowChannel) =
+conductances(i::FlowChannel) =
     map(filter(ionic, actuated(i))) do thing
         Conductance{thing}
     end
 
-_sensed_ions(i::FlowChannel) = filter(ionic, sensed(i))
+sensed_ions(i::FlowChannel) = filter(ionic, sensed(i))
 
-_instantiate_hooks(pre::Compartment, to::Component, args::Function...) =
+instantiate_hooks(pre::Compartment, to::Component, args::Function...) =
     map(args) do fun
         map(fun(to)) do thing
             _name = shorthand_name(thing)
@@ -44,7 +44,7 @@ _instantiate_hooks(pre::Compartment, to::Component, args::Function...) =
         end |> Iterators.flatten |> collect
     end |> Iterators.flatten |> collect
 
-_instantiate_variables(c::Component, args::Function...) =
+instantiate_variables(c::Component, args::Function...) =
     map(args) do fun
         map(fun(c)) do thing
             _name = shorthand_name(thing)
@@ -52,7 +52,7 @@ _instantiate_variables(c::Component, args::Function...) =
         end |> Iterators.flatten |> collect
     end |> Iterators.flatten |> collect
 
-_instantiate_parameters(c::Component, args::Function...) =
+instantiate_parameters(c::Component, args::Function...) =
     map(args) do fun
         map(fun(c)) do thing
             _name = shorthand_name(thing)
@@ -61,41 +61,7 @@ _instantiate_parameters(c::Component, args::Function...) =
     end |> Iterators.flatten |> collect
 
 
-export _currents, _reversals, _conductances, _instantiate_hooks, _species, _sensed_ions, _voltage, _instantiate_variables, _instantiate_parameters
-
-sensedvars(i::FlowChannel) =
-    map(sensed(i)) do thing
-        Symbol(thing |> shorthand_name)
-    end
-
-reversals(i::FlowChannel) =
-    map(actuated(i)) do thing
-        Symbol(:E, shorthand_name(thing))
-    end
-
-currents(i::FlowChannel) =
-    map(actuated(i)) do thing
-        Symbol(:I, shorthand_name(thing))
-    end
-
-conductances(i::FlowChannel) =
-    map(actuated(i)) do thing
-        Symbol(:g, shorthand_name(thing))
-    end
-
-instantiate_variables(c::Component, args...) =
-    map(args) do fun
-        map(fun(c)) do _name
-            @variables $_name(t)
-        end |> Iterators.flatten |> collect
-    end |> Iterators.flatten |> collect
-
-instantiate_parameters(c::Component, args...) =
-    map(args) do fun
-        map(fun(c)) do _name
-            @parameters $_name
-        end |> Iterators.flatten |> collect
-    end |> Iterators.flatten |> collect
+export currents, reversals, conductances, instantiate_hooks, species, sensed_ions, voltage
 
 instantiate_variables(v::Vector{Symbol}) =
     map(v) do f
@@ -108,23 +74,16 @@ instantiate_parameters(v::Vector{Symbol}) =
         @variables $f
     end |> Iterators.flatten |> collect
 
-instantiate(pre::Compartment, to::Component, args...) =
-    map(args) do fun
-        map(fun(c)) do _name
-            @variables $_name(t)
-        end |> Iterators.flatten |> collect
-    end |> Iterators.flatten |> collect
-
 
 get_actuator(c::ComponentSystem{C,S}, v::Type{Voltage}) where {C<:FlowChannel,S} =
     sum(currents(c.c)) do I
-        ModelingToolkit.getvar(c.sys, I; namespace=true)
+        ModelingToolkit.getvar(c.sys, shorthand_name(I); namespace=true)
     end
 
 function get_actuator(c::ComponentSystem{C,S}, f::DataType) where {C<:FlowChannel,S}
     indx = findfirst(x -> x == f, actuated(c.c))
     isnothing(indx) && return Num(0.0)
-    return ModelingToolkit.getvar(c.sys, currents(c.c)[indx]; namespace=true)
+    return ModelingToolkit.getvar(c.sys, shorthand_name.(currents(c.c))[indx]; namespace=true)
 end
 
 function get_sensor(c::ComponentSystem{C,S}, f::DataType) where {C<:FlowChannel,S}

@@ -15,8 +15,8 @@ h∞(::Na, V) = 1.0 / (1.0 + exp((V + 48.9) / 5.18))
 
 function (ch::Na)(n::Neuron = EmptyNeuron())
     
-    I, E, V = _instantiate_hooks(n, ch, _currents, _reversals, _voltage)
-    g, = _instantiate_parameters(ch, _conductances)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
     @variables mNa(t) hNa(t)
 
     eqs = [D(mNa) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mNa),
@@ -46,8 +46,8 @@ h∞(::CaS, V) = 1.0 / (1.0 + exp((V + 60.0) / 6.2))
 τh(::CaS, V) = 120.0 + 300.0 / (exp((V + 55.0) / 9.0) + exp((V + 65.0) / -16.0))
 
 function (ch::CaS)(n::Neuron)
-    I, Ca, E, V = _instantiate_hooks(n, ch, _currents, _sensed_ions, _reversals, _voltage)
-    g, = _instantiate_parameters(ch, _conductances)
+    I, Ca, E, V = instantiate_hooks(n, ch, currents, sensed_ions, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
     @variables mCaS(t) hCaS(t) V(t)
 
     eqs = [D(mCaS) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mCaS),
@@ -75,8 +75,8 @@ h∞(::CaT, V) = 1.0 / (1.0 + exp((V + 32.1) / 5.5))
 τh(::CaT, V) = 210.0 - 179.6 / (1.0 + exp((V + 55.0) / -16.9))
 
 function (ch::CaT)(n::Neuron)
-    I, Ca, E, V = _instantiate_hooks(n, ch, _currents, _sensed_ions, _reversals, _voltage)
-    g, = _instantiate_parameters(ch, _conductances)
+    I, Ca, E, V = instantiate_hooks(n, ch, currents, sensed_ions, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
 
     @variables mCaT(t) hCaT(t)
     eqs = [D(mCaT) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mCaT),
@@ -98,16 +98,14 @@ struct Ka{F,D<:Real} <: FlowChannel(Potassium)
 end
 
 Ka(x) = Ka(x, 0.0, 0.0)
-ionic_current(::Ka, sys::ODESystem) = sys.IKa
-external_params(::Ka) = (:EK, :τKa)
 m∞(::Ka, V) = 1.0 / (1.0 + exp((V + 27.2) / -8.7))
 h∞(::Ka, V) = 1.0 / (1.0 + exp((V + 56.9) / 4.9))
 τm(::Ka, V) = 23.2 - 20.8 / (1.0 + exp((V + 32.9) / -15.2))
 τh(::Ka, V) = 77.2 - 58.4 / (1.0 + exp((V + 38.9) / -26.5))
 
 function (ch::Ka)(n::Neuron)
-    I, E, V = _instantiate_hooks(n, ch, _currents, _reversals, _voltage)
-    g, = _instantiate_parameters(ch, _conductances)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
 
     @variables mKa(t) hKa(t)
     eqs = [D(mKa) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mKa),
@@ -132,8 +130,8 @@ m∞(::KCa, V, Ca) = (Ca / (Ca + 3.0)) / (1.0 + exp((V + 28.3) / -12.6));
 τm(::KCa, V) = 180.6 - 150.2 / (1.0 + exp((V + 46.0) / -22.7))
 
 function (ch::KCa)(n::Neuron)
-    I, Ca, E, V = _instantiate_hooks(n, ch, _currents, _sensed_ions, _reversals, _voltage)
-    g, = _instantiate_parameters(ch, _conductances)
+    I, Ca, E, V = instantiate_hooks(n, ch, currents, sensed_ions, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
 
     @variables mKCa(t)
     eqs = [
@@ -158,8 +156,8 @@ m∞(::Kdr, V) = 1.0 / (1.0 + exp((V + 12.3) / -11.8));
 τm(::Kdr, V) = 14.4 - 12.8 / (1.0 + exp((V + 28.3) / -19.2))
 
 function (ch::Kdr)(n::Neuron)
-    I, E, V = _instantiate_hooks(n, ch, _currents, _reversals, _voltage)
-    g, = _instantiate_parameters(ch, _conductances)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
     @variables mKdr(t)
 
     eqs = [D(mKdr) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mKdr),
@@ -183,8 +181,8 @@ m∞(::H, V) = 1.0 / (1.0 + exp((V + 75.0) / 5.5))
 τm(::H, V) = (2 / (exp((V + 169.7) / (-11.6)) + exp((V - 26.7) / (14.3))))
 
 function (ch::H)(n::Neuron)
-    I, E, V = _instantiate_hooks(n, ch, _currents, _reversals, _voltage)
-    g, = _instantiate_parameters(ch, _conductances)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
     @variables mH(t)
 
     eqs = [D(mH) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mH),
@@ -203,8 +201,8 @@ struct leak{D<:Real} <: FlowChannel(Leak)
 end
 
 function (ch::leak)(n::Neuron)
-    I, E, V = _instantiate_hooks(n, ch, _currents, _reversals, _voltage)
-    g, = _instantiate_parameters(ch, _conductances)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
 
     eqs = [I ~ g * (E - V)]
 
