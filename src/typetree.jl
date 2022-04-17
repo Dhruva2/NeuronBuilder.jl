@@ -70,7 +70,7 @@ actuated(::FlowChannel{S,A}) where {S,A} = typeflatten(A)
 
 function typeflatten(s::DataType)
     map(fieldtypes(s)) do el
-        el <: Tuple && return testsensed(el)
+        el <: Tuple && return typeflatten(el)
         return (el,)
     end |> Iterators.flatten |> collect |> unique!
 end

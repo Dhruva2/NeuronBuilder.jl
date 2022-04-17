@@ -108,18 +108,6 @@ end
 
 #isLeak(c::IonChannel) = typeof(c) in [NeuronBuilder.Liu.Leak{Float64}, NeuronBuilder.Prinz.Leak{Float64}]
 
-function testsensed(::FlowChannel{S,A}) where {S,A}
-    isempty(fieldtypes(S)) && return S
-
-    els = []
-    remaining = fieldtypes(S)
-    while !isempty(remaining)
-        for el in remaining
-            isempty(fieldtypes) && push!(els, el)
-        end
-        filter(x -> !isempty(x), fieldtypes(remaining))
-    end
-end
 
 function vardivide(v::Num...)
     states = [filter(!ModelingToolkit.isparameter, v)...]
