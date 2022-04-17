@@ -4,6 +4,7 @@ Running the STG network
 - The names of the variables in the system can be listed with `@show stg.states`. The problem that then takes this system is a regular `ODEProblem`.
 - You can plot variables by their names with plot(sol;  vars = [STG.AB₊V]). 
 """
+
 using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
 
 #Using parameters from Prinz (2004) Similar network activity from disparate circuit parameters
@@ -107,8 +108,8 @@ end
 
 tspan = (0.0, 10000.0)
 stg = build_network(nodes, edges, 3, name = :stg)
-prob = ODEProblem(stg, [], tspan, [])
+prob = ODEProblem(stg, [], tspan, [];jac=true)
 
 @time sol = solve(prob, AutoTsit5(Rosenbrock23()))
 
-plot(sol, xlims=(5000, 10000), ylims=(-80, 70); vars=[stg.AB₊V, stg.LP₊V, stg.PY₊V], layout=(3, 1))
+plot(sol, xlims=(5000, 10000), ylims=(-80, 70); vars=[stg.AB₊V, stg.LP₊V, stg.PY₊V, stg.PY₊CaS₊ICa], layout=(4, 1))

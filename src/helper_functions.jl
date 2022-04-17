@@ -13,10 +13,55 @@ function get_name(p::PlasticisedChannel)
     )
 end
 
+_voltage(el) = (Voltage,)
+
+_currents(i::FlowChannel) =
+    map(filter(ionic, actuated(i))) do thing
+        Current{thing}
+    end
+
+_reversals(i::FlowChannel) =
+    map(filter(ionic, actuated(i))) do thing
+        Reversal{thing}
+    end
+
+_conductances(i::FlowChannel) =
+    map(filter(ionic, actuated(i))) do thing
+        Conductance{thing}
+    end
+
+_sensed_ions(i::FlowChannel) = filter(ionic, sensed(i))
+
+_instantiate_hooks(pre::Compartment, to::Component, args::Function...) =
+    map(args) do fun
+        map(fun(to)) do thing
+            _name = shorthand_name(thing)
+            if has_dynamics(pre, thing)
+                return @variables $_name(t)
+            else
+                return @parameters $_name
+            end
+        end |> Iterators.flatten |> collect
+    end |> Iterators.flatten |> collect
+
+_instantiate_variables(c::Component, args::Function...) =
+    map(args) do fun
+        map(fun(c)) do thing
+            _name = shorthand_name(thing)
+            return @variables $_name(t)
+        end |> Iterators.flatten |> collect
+    end |> Iterators.flatten |> collect
+
+_instantiate_parameters(c::Component, args::Function...) =
+    map(args) do fun
+        map(fun(c)) do thing
+            _name = shorthand_name(thing)
+            return @parameters $_name
+        end |> Iterators.flatten |> collect
+    end |> Iterators.flatten |> collect
 
 
-
-
+export _currents, _reversals, _conductances, _instantiate_hooks, _species, _sensed_ions, _voltage, _instantiate_variables, _instantiate_parameters
 
 sensedvars(i::FlowChannel) =
     map(sensed(i)) do thing
@@ -33,30 +78,43 @@ currents(i::FlowChannel) =
         Symbol(:I, shorthand_name(thing))
     end
 
-conductance(i::FlowChannel) =
+conductances(i::FlowChannel) =
     map(actuated(i)) do thing
         Symbol(:g, shorthand_name(thing))
     end
 
 instantiate_variables(c::Component, args...) =
-    map(args) do el
-        map(el(c)) do f
-            @variables $f(t)
+    map(args) do fun
+        map(fun(c)) do _name
+            @variables $_name(t)
         end |> Iterators.flatten |> collect
     end |> Iterators.flatten |> collect
 
 instantiate_parameters(c::Component, args...) =
-    map(args) do el
-        map(el(c)) do f
-            @parameters $f
+    map(args) do fun
+        map(fun(c)) do _name
+            @parameters $_name
         end |> Iterators.flatten |> collect
     end |> Iterators.flatten |> collect
-
 
 instantiate_variables(v::Vector{Symbol}) =
     map(v) do f
         @variables $f(t)
     end |> Iterators.flatten |> collect
+
+
+instantiate_parameters(v::Vector{Symbol}) =
+    map(v) do f
+        @variables $f
+    end |> Iterators.flatten |> collect
+
+instantiate(pre::Compartment, to::Component, args...) =
+    map(args) do fun
+        map(fun(c)) do _name
+            @variables $_name(t)
+        end |> Iterators.flatten |> collect
+    end |> Iterators.flatten |> collect
+
 
 get_actuator(c::ComponentSystem{C,S}, v::Type{Voltage}) where {C<:FlowChannel,S} =
     sum(currents(c.c)) do I
@@ -104,5 +162,11 @@ function testsensed(::FlowChannel{S,A}) where {S,A}
     end
 end
 
+function vardivide(v::Num...)
+    states = [filter(!ModelingToolkit.isparameter, v)...]
+    params = [filter(ModelingToolkit.isparameter, v)...]
+    return states, params
+end
 
+export vardivide
 

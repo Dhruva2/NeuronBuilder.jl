@@ -1,5 +1,6 @@
 ### Basic components and subtypes ###
 abstract type Species end
+abstract type SpeciesProperty{S<:Species} end
 abstract type Ion <: Species end
 abstract type PseudoIon <: Ion end
 abstract type SpeciesDynamics{F} end
@@ -7,13 +8,16 @@ abstract type SpeciesDynamics{F} end
 """
 Not including voltage in tagging ion channels. Any flow channel. Flows are all charged particles. So they will always include voltage. Not going to consider flows of e.g. proteins
 """
+
 struct Voltage <: Species end
 struct Sodium <: Ion end
 struct Potassium <: Ion end
 struct Calcium <: Ion end
 struct Proton <: Ion end
 struct Leak <: PseudoIon end
-abstract type Reversal{I<:Ion} end
+abstract type Reversal{I<:Ion} <: SpeciesProperty{I} end
+abstract type Current{I<:Ion} <: SpeciesProperty{I} end
+abstract type Conductance{I<:Ion} <: SpeciesProperty{I} end
 
 shorthand_name(::Type{Voltage}) = :V
 shorthand_name(::Type{Sodium}) = :Na
@@ -22,8 +26,14 @@ shorthand_name(::Type{Calcium}) = :Ca
 shorthand_name(::Type{Proton}) = :H
 shorthand_name(::Type{Leak}) = :Leak
 shorthand_name(::Type{Reversal{T}}) where {T} = Symbol(:E, shorthand_name(T))
+shorthand_name(::Type{Current{T}}) where {T} = Symbol(:I, shorthand_name(T))
+shorthand_name(::Type{Conductance{T}}) where {T} = Symbol(:g, shorthand_name(T))
+
 shorthand_name(x::Type{Tuple{T,R}}) where {T,R} = shorthand_name.(x.types)
 
+# shorthand_name(x, :current) = Symbol(:I, shorthand_name(x))
+# shorthand_name(x, :reversal) = Symbol(:E, shorthand_name(x))
+# shorthand_name(x, :conductance) = Symbol(:g, shorthand_name(x))
 
 ionic(x) = x <: Ion
 export ionic
@@ -33,6 +43,14 @@ abstract type Compartment <: Component end
 abstract type FlowChannel{Sensors<:Tuple,Actuators<:Tuple} <: Component end
 
 abstract type Neuron <: Compartment end
+dynamics(n::Neuron) = n.dynamics
+has_dynamics(n::Neuron, species) = haskey(dynamics(n), species)
+
+# defined for reversal and conductance since they belong to a neuron. not conductance (belongs to Link)
+has_dynamics(n::Neuron, ::Type{Current{I}}) where {I} = true
+has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
+
+
 
 abstract type Synapse <: Component end
 struct EmptyConnection <: Synapse end
@@ -66,7 +84,7 @@ end
 capacitance(g::NoGeometry) = g.capacitance
 
 abstract type PlasticityRule{S} end
-struct PlasticisedChannel{S,S2,A} <: FlowChannel{Tuple{S, S2},A}
+struct PlasticisedChannel{S,S2,A} <: FlowChannel{Tuple{S,S2},A}
     channel::FlowChannel{S,A}
     mutation::PlasticityRule{S2}
 end

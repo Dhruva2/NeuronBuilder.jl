@@ -7,14 +7,14 @@ const D = Differential(t)
 export t, D
 
 include("typetree.jl")
-export Species, Ion, SpeciesDynamics, Voltage, Sodium, Potassium, Calcium, Proton, Leak, Reversal
+export Species, SpeciesProperty, Ion, SpeciesDynamics, Voltage, Sodium, Potassium, Calcium, Proton, Leak, Reversal, Current, Conductance
 export Compartment, Component, FlowChannel, Neuron, Synapse, EmptyConnection, ComponentSystem
 export PlasticityRule, PlasticisedChannel
 export Geometry, NoGeometry, capacitance
 
 include("helper_functions.jl")
 export get_name, shorthand_name, sensed, actuated, get_sensor, get_actuator
-export sensedvars, reversals, currents, conductance, instantiate_variables, instantiate_parameters
+export sensedvars, reversals, currents, conductances, instantiate_variables, instantiate_parameters
 
 include("assets/Liu/Liu.jl")
 using .Liu
@@ -25,7 +25,7 @@ using .Prinz
 export Prinz
 
 include("neurons.jl")
-export BasicNeuron, BasicVoltageDynamics
+export BasicNeuron, BasicVoltageDynamics, EmptyNeuron, has_dynamics
 
 include("synapses.jl")
 export Chol, Glut
