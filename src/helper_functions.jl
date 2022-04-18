@@ -32,6 +32,14 @@ function typeflatten(s::DataType)
     end |> Iterators.flatten |> collect |> unique!
 end
 
+voltage(el) = (Voltage,)
+
+currents(i::FlowChannel) =
+    map(filter(ionic, actuated(i))) do thing
+        Current{thing}
+    end
+
+
 sensedvars(i::FlowChannel) =
     map(sensed(i)) do thing
         Symbol(thing |> shorthand_name)
