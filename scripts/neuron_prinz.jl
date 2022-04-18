@@ -14,9 +14,10 @@ channels = [Prinz.Na(100 * Prinz_conv), Prinz.CaS(6 * Prinz_conv), Prinz.CaT(2.5
 
 τCa = 200.0
 Ca∞ = 0.05
+fxarea = 14.96 * 0.0628
 
 defaults = Dict(Voltage => BasicVoltageDynamics(),
-    Calcium => Prinz.CalciumDynamics(τCa, Ca∞, 14.96 * 0.0628),
+    Calcium => Prinz.CalciumDynamics(τCa, Ca∞, fxarea),
     Reversal{Calcium} => Prinz.CaReversalDynamics())
 
 somatic_parameters = Dict(

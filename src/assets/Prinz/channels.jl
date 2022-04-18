@@ -5,13 +5,11 @@ struct Na{F,D<:Real} <: FlowChannel(Sodium)
     hNa::F
 end
 
-
 Na(x) = Na(x, 0.0, 0.0)
 m∞(::Na, V) = 1.0 / (1.0 + exp((V + 25.5) / -5.29))
 h∞(::Na, V) = 1.0 / (1.0 + exp((V + 48.9) / 5.18))
 τm(::Na, V) = 2.64 - 2.52 / (1 + exp((V + 120.0) / -25.0))
 τh(::Na, V) = (1.34 / (1.0 + exp((V + 62.9) / -10.0))) * (1.5 + 1.0 / (1.0 + exp((V + 34.9) / 3.6)))
-
 
 function (ch::Na)(n::Neuron = EmptyNeuron())
     
@@ -30,7 +28,7 @@ function (ch::Na)(n::Neuron = EmptyNeuron())
 end
 
 #################### Slow calcium current #############################
-struct CaS{F,D<:Real} <: FlowChannel(Calcium, Calcium)
+struct CaS{F,D<:Real} <: FlowChannel(Calcium)
     gCaS::D
     mCaS::F
     hCaS::F
@@ -46,7 +44,7 @@ h∞(::CaS, V) = 1.0 / (1.0 + exp((V + 60.0) / 6.2))
 τh(::CaS, V) = 120.0 + 300.0 / (exp((V + 55.0) / 9.0) + exp((V + 65.0) / -16.0))
 
 function (ch::CaS)(n::Neuron)
-    I, Ca, E, V = instantiate_hooks(n, ch, currents, sensed_ions, reversals, voltage)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
     g, = instantiate_parameters(ch, conductances)
     @variables mCaS(t) hCaS(t) V(t)
 
@@ -54,7 +52,7 @@ function (ch::CaS)(n::Neuron)
         D(hCaS) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hCaS),
         I ~ g * mCaS^3 * hCaS * (E - V)]
 
-    states, params = vardivide(V, Ca, E, mCaS, hCaS, I, g)
+    states, params = vardivide(V, E, mCaS, hCaS, I, g)
     defaultmap = [mCaS => ch.mCaS, hCaS => ch.hCaS, g => ch.gCaS]
 
     return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
@@ -62,7 +60,7 @@ end
 
 #################### Transient calcium current ######################
 
-struct CaT{F,D<:Real} <: FlowChannel(Calcium, Calcium)
+struct CaT{F,D<:Real} <: FlowChannel(Calcium)
     gCaT::D
     mCaT::F
     hCaT::F
@@ -75,7 +73,7 @@ h∞(::CaT, V) = 1.0 / (1.0 + exp((V + 32.1) / 5.5))
 τh(::CaT, V) = 210.0 - 179.6 / (1.0 + exp((V + 55.0) / -16.9))
 
 function (ch::CaT)(n::Neuron)
-    I, Ca, E, V = instantiate_hooks(n, ch, currents, sensed_ions, reversals, voltage)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
     g, = instantiate_parameters(ch, conductances)
 
     @variables mCaT(t) hCaT(t)
@@ -83,7 +81,7 @@ function (ch::CaT)(n::Neuron)
         D(hCaT) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hCaT),
         I ~ g * mCaT^3 * hCaT * (E - V)]
 
-    states, params = vardivide(V, Ca, E, mCaT, hCaT, I, g)
+    states, params = vardivide(V, E, mCaT, hCaT, I, g)
     defaultmap = [mCaT => ch.mCaT, hCaT => ch.hCaT, g => ch.gCaT]
 
     return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
@@ -149,7 +147,6 @@ struct Kdr{F,D<:Real} <: FlowChannel(Potassium)
     gKdr::D
     mKdr::F
 end
-
 
 Kdr(x) = Kdr(x, 0.0)
 m∞(::Kdr, V) = 1.0 / (1.0 + exp((V + 12.3) / -11.8));

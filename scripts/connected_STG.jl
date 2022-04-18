@@ -1,14 +1,11 @@
 """
 Running the STG network 
 - For units to check out, synapses also get a conversion factor.
-- The names of the variables in the system can be listed with `@show stg.states`. The problem that then takes this system is a regular `ODEProblem`.
+- The names of the variables in the system can be listed with `@show stg.states`. 
 - You can plot variables by their names with plot(sol;  vars = [STG.AB₊V]). 
 """
 
 using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
-
-#Using parameters from Prinz (2004) Similar network activity from disparate circuit parameters
-#these are specifically in Table 2: AB2, LP4, PY1 for figure 3e
 
 const Area = 0.0628 # Prinz/Liu 0.0628 mm2
 const Cm = 10.0 # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
@@ -32,6 +29,8 @@ somatic_parameters = Dict(
     Calcium => 0.05,
     Reversal{Calcium} => 0.0)
 
+#Using parameters from Prinz (2004) Similar network activity from disparate circuit parameters
+#these are specifically in Table 2: AB2, LP4, PY1 for figure 3e
 function AB_Neuron(num_connections)
     AB2_ch = [
         Prinz.Na(100.0 * Prinz_conv), 
@@ -107,7 +106,7 @@ function edges(i, j)
 end
 
 tspan = (0.0, 10000.0)
-stg = build_network(nodes, edges, 3, name = :stg)
+stg = build_network(nodes, edges, 1:3, name = :stg)
 prob = ODEProblem(stg, [], tspan, [];jac=true)
 
 @time sol = solve(prob, AutoTsit5(Rosenbrock23()))

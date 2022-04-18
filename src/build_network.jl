@@ -29,13 +29,14 @@ function in_degree(edge_fn, num_nodes, j)
     end
 end
 
-function build_network(nodefn, edgefn, num_nodes; name=:network)
+function build_network(nodefn, edgefn, which_nodes::AbstractRange; name=:network)
     eqs = Array{Equation,1}(undef, 0)
+    num_nodes = length(which_nodes)
     neurons = [nodefn(j)(in_degree(edgefn, num_nodes, j)) for j in 1:num_nodes]
     network = ODESystem(eqs, t, [], []; name=name, systems=[el.sys for el in neurons])
     fill_counter = ones(Int64, num_nodes)
-    for i = 1:num_nodes
-        for j = 1:num_nodes
+    for i in which_nodes
+        for j in which_nodes
             for syn in edgefn(i, j)
                 network = add_connection(network, neurons[i], neurons[j], syn; i=fill_counter[j])
                 !(typeof(syn) == EmptyConnection) && (fill_counter[j] += 1)

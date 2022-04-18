@@ -1,5 +1,3 @@
-######### helper functions ###########
-
 #return unparameterised type as symbol
 function get_name(ch::Component)
     Base.typename(ch |> typeof).name |> Symbol
@@ -20,7 +18,12 @@ shorthand_name(::Type{Calcium}) = :Ca
 shorthand_name(::Type{Proton}) = :H
 shorthand_name(::Type{Leak}) = :Leak
 shorthand_name(::Type{Reversal{T}}) where {T} = Symbol(:E, shorthand_name(T))
+shorthand_name(::Type{Current{T}}) where {T} = Symbol(:I, shorthand_name(T))
+shorthand_name(::Type{Conductance{T}}) where {T} = Symbol(:g, shorthand_name(T))
+shorthand_name(::Type{mRNA{T}}) where {T} = Symbol(:mRNA_, shorthand_name(T))
+
 shorthand_name(x::Type{Tuple{T,R}}) where {T,R} = shorthand_name.(x.types)
+
 
 sensed(::FlowChannel{S,A}) where {S,A} = typeflatten(S)
 actuated(::FlowChannel{S,A}) where {S,A} = typeflatten(A)
@@ -33,16 +36,21 @@ function typeflatten(s::DataType)
 end
 
 voltage(el) = (Voltage,)
+ionic(x) = x <: Ion
 
 currents(i::FlowChannel) =
     map(filter(ionic, actuated(i))) do thing
         Current{thing}
     end
 
-
 sensedvars(i::FlowChannel) =
     map(sensed(i)) do thing
         Symbol(thing |> shorthand_name)
+    end
+
+mrna(i::FlowChannel) =
+    map(filter(ionic, actuated(i))) do thing
+        mRNA{thing}
     end
 
 reversals(i::FlowChannel) =
@@ -85,8 +93,6 @@ instantiate_parameters(c::Component, args::Function...) =
         end |> Iterators.flatten |> collect
     end |> Iterators.flatten |> collect
 
-
-export currents, reversals, conductances, instantiate_hooks, species, sensed_ions, voltage
 
 instantiate_variables(v::Vector{Symbol}) =
     map(v) do f
@@ -131,13 +137,8 @@ function get_from(d::Dict{DataType,SpeciesDynamics}, func)
     return reduce(vcat, muddled)::Vector{Num}
 end
 
-isLeak(c::FlowChannel) = typeof(c) in [NeuronBuilder.Liu.leak{Float64}, NeuronBuilder.Prinz.leak{Float64}]
-
 function vardivide(v::Num...)
     states = [filter(!ModelingToolkit.isparameter, v)...]
     params = [filter(ModelingToolkit.isparameter, v)...]
     return states, params
 end
-
-export vardivide
-
