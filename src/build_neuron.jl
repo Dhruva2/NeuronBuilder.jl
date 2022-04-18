@@ -25,17 +25,22 @@ function (ch::RegIonChannel)()
     return ComponentSystem(ch, sys)
 end
 
-function (syn::Synapse)(; name=get_name(syn))
-    @variables Vpre(t) Vpost(t)
-    eqs, states, parameters, current, defaultmap = channel_dynamics(syn, Vpre, Vpost)
-    sys = ODESystem(eqs, t, [Vpre, Vpost, states...], [parameters...]; observed=current,
-        name=name, defaults=defaultmap)
-    return ComponentSystem(syn, sys)
+
+function build_new_neuron(comp::Soma, channels::Vector{Component}, hooks::Integer, name::Symbol)
+    # add warning labeling each requirement that isn't included
+    # soma must have flow variables and external hook variables
+
+    # add hooks a posteriori? 
+    # push al the mess into separate functions so that the only key code is the D(V) and D(Ca)
+
+    # Neuron parameteres built from flows, reversals, 
+
+    @variables V(t)
+    ∪(reversals.([channels])...)
+
 end
 
-
-
-function build_neuron(comp::Soma, channels::Vector{IonChannel}, hooks::Integer, name::Symbol)
+function build_neuron(comp::Soma, channels::Vector{C}, hooks::Integer, name::Symbol) where {C<:Component}
 
     neuron_parameters = @parameters area Cₘ τCa Ca∞ Iapp
     neuron_states = @variables V(t) Ca(t)
@@ -46,6 +51,8 @@ function build_neuron(comp::Soma, channels::Vector{IonChannel}, hooks::Integer, 
 
     summed_membrane_currents = sum(ionic_current(cs.c, cs.sys) for cs in channel_systems)
     summed_calcium_flux = sum(calcium_current(cs.c, cs.sys) for cs in channel_systems)
+
+    ## here you can just hook the flows
     connections = cat(
         [voltage_hook(V, cs) for cs in channel_systems],
         [calcium_hook(Ca, cs) for cs in channel_systems],
@@ -61,6 +68,14 @@ function build_neuron(comp::Soma, channels::Vector{IonChannel}, hooks::Integer, 
 
     eqs = filter(x -> !(x == (Num(0) ~ Num(0))), cat(connections, diffeqs; dims=1))
 
+    ## external_params used to do the reversals and time constants.
+    ## τCa isnt used inside the calcium neurons
+    """
+    Ca inf is 0.05
+    external_params used to do the reversals and time constants. get rid.
+    tau ca is only a property of the soma. not entered in cas or cat channels
+    """
+    ## dictionary hooking variables of symbols el to their dictionary settings
     channel_defs = Dict(
         getproperty(cs.sys, el) => comp.parameters[el]
         for cs in channel_systems for el in external_params(cs.c) if (haskey(comp.parameters, el) && hasproperty(cs.sys, el))
@@ -71,6 +86,7 @@ function build_neuron(comp::Soma, channels::Vector{IonChannel}, hooks::Integer, 
     )
 
     state_defs = Dict(V => comp.initial_states[:V], Ca => comp.initial_states[:Ca])
+
     neur = ODESystem(eqs, t;
         systems=[cs.sys for cs in channel_systems],
         defaults=merge(soma_defs, channel_defs, state_defs),
@@ -105,29 +121,3 @@ end
 Issue: need to do all connections in one ḡChol
 
 """
-
-function add_connection(group, pre, post, syn::EmptyConnection; kwargs...)
-    return group
-end
-
-function add_connection(group, pre_n, post_n, syn::Synapse; name=ModelingToolkit.getname(group), i=1)
-    pre = pre_n.ODESystem
-    post = post_n.ODESystem
-    prename, postname = ModelingToolkit.getname.([pre, post])
-    synapse_sys = syn(; name=Symbol(prename, :to, postname, get_name(syn)))
-
-    oldeqs = ModelingToolkit.get_eqs(group)
-    neweqs = [
-        get_pre(syn, pre) ~ my_pre(synapse_sys),
-        get_post(syn, post) ~ my_post(synapse_sys),
-        syn_current(syn, synapse_sys.sys) ~ getproperty(post, Symbol(post_connector(syn), i))
-    ]
-
-    eqs = cat(oldeqs, neweqs, dims=1)
-    systems = cat(ModelingToolkit.get_systems(group), synapse_sys.sys, dims=1)
-
-    return connected = ODESystem(eqs, t, [], [];
-        name=name,
-        systems=systems)
-end
-
