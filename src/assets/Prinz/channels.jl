@@ -13,17 +13,20 @@ h∞(::Na, V) = 1.0 / (1.0 + exp((V + 48.9) / 5.18))
 τh(::Na, V) = (1.34 / (1.0 + exp((V + 62.9) / -10.0))) * (1.5 + 1.0 / (1.0 + exp((V + 34.9) / 3.6)))
 
 
-function (ch::Na)()
-    @variables mNa(t) hNa(t) V(t)
-    (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
+function (ch::Na)(n::Neuron = EmptyNeuron())
+    
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
+    @variables mNa(t) hNa(t)
 
     eqs = [D(mNa) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mNa),
         D(hNa) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hNa),
         I ~ g * mNa^3 * hNa * (E - V)]
-    current = [eqs[3]]
+
+    states, params = vardivide(V, mNa, hNa, I, g, E)
     defaultmap = [mNa => ch.mNa, hNa => ch.hNa, g => ch.gNa]
-    return ComponentSystem(ch, ODESystem(eqs, t, [V, mNa, hNa, I], [g, E]; observed=current, defaults=defaultmap, name=get_name(ch)))
+    
+    return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
 end
 
 #################### Slow calcium current #############################
@@ -42,17 +45,19 @@ h∞(::CaS, V) = 1.0 / (1.0 + exp((V + 60.0) / 6.2))
 τm(::CaS, V) = 2.8 + 14.0 / (exp((V + 27.0) / 10.0) + exp((V + 70.0) / -13.0))
 τh(::CaS, V) = 120.0 + 300.0 / (exp((V + 55.0) / 9.0) + exp((V + 65.0) / -16.0))
 
-function (ch::CaS)()
+function (ch::CaS)(n::Neuron)
+    I, Ca, E, V = instantiate_hooks(n, ch, currents, sensed_ions, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
     @variables mCaS(t) hCaS(t) V(t)
-    (I,), (Ca,), (E,) = instantiate_variables(ch, currents, sensedvars, reversals)
-    (g,) = instantiate_parameters(ch, conductances)
 
     eqs = [D(mCaS) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mCaS),
         D(hCaS) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hCaS),
         I ~ g * mCaS^3 * hCaS * (E - V)]
-    current = [eqs[3]]
+
+    states, params = vardivide(V, Ca, E, mCaS, hCaS, I, g)
     defaultmap = [mCaS => ch.mCaS, hCaS => ch.hCaS, g => ch.gCaS]
-    return ComponentSystem(ch, ODESystem(eqs, t, [V, Ca, E, mCaS, hCaS, I], [g]; observed=current, defaults=defaultmap, name=get_name(ch)))
+
+    return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
 end
 
 #################### Transient calcium current ######################
@@ -69,17 +74,19 @@ h∞(::CaT, V) = 1.0 / (1.0 + exp((V + 32.1) / 5.5))
 τm(::CaT, V) = 43.4 - 42.6 / (1.0 + exp((V + 68.1) / -20.5))
 τh(::CaT, V) = 210.0 - 179.6 / (1.0 + exp((V + 55.0) / -16.9))
 
-function (ch::CaT)()
-    @variables mCaT(t) hCaT(t) V(t)
-    (I,), (Ca,), (E,) = instantiate_variables(ch, currents, sensedvars, reversals)
-    (g,) = instantiate_parameters(ch, conductances)
+function (ch::CaT)(n::Neuron)
+    I, Ca, E, V = instantiate_hooks(n, ch, currents, sensed_ions, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
 
+    @variables mCaT(t) hCaT(t)
     eqs = [D(mCaT) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mCaT),
         D(hCaT) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hCaT),
         I ~ g * mCaT^3 * hCaT * (E - V)]
-    current = [eqs[3]]
+
+    states, params = vardivide(V, Ca, E, mCaT, hCaT, I, g)
     defaultmap = [mCaT => ch.mCaT, hCaT => ch.hCaT, g => ch.gCaT]
-    return ComponentSystem(ch, ODESystem(eqs, t, [V, Ca, E, mCaT, hCaT, I], [g]; observed=current, defaults=defaultmap, name=get_name(ch)))
+
+    return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
 end
 
 
@@ -91,23 +98,24 @@ struct Ka{F,D<:Real} <: FlowChannel(Potassium)
 end
 
 Ka(x) = Ka(x, 0.0, 0.0)
-ionic_current(::Ka, sys::ODESystem) = sys.IKa
-external_params(::Ka) = (:EK, :τKa)
 m∞(::Ka, V) = 1.0 / (1.0 + exp((V + 27.2) / -8.7))
 h∞(::Ka, V) = 1.0 / (1.0 + exp((V + 56.9) / 4.9))
 τm(::Ka, V) = 23.2 - 20.8 / (1.0 + exp((V + 32.9) / -15.2))
 τh(::Ka, V) = 77.2 - 58.4 / (1.0 + exp((V + 38.9) / -26.5))
 
-function (ch::Ka)()
-    (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
-    states = @variables mKa(t) hKa(t) V(t)
+function (ch::Ka)(n::Neuron)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
+
+    @variables mKa(t) hKa(t)
     eqs = [D(mKa) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mKa),
         D(hKa) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hKa),
         I ~ g * mKa^3 * hKa * (E - V)]
-    current = [eqs[3]]
+
+    states, params = vardivide(V, E, mKa, hKa, I, g)
     defaultmap = [mKa => ch.mKa, hKa => ch.hKa, g => ch.gKa]
-    return ComponentSystem(ch, ODESystem(eqs, t, [V, mKa, hKa, I], [g, E]; observed=current, defaults=defaultmap, name=get_name(ch)))
+
+    return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
 end
 
 ################### Calcium-activated potassium current ########
@@ -121,17 +129,19 @@ KCa(x) = KCa(x, 0.0)
 m∞(::KCa, V, Ca) = (Ca / (Ca + 3.0)) / (1.0 + exp((V + 28.3) / -12.6));
 τm(::KCa, V) = 180.6 - 150.2 / (1.0 + exp((V + 46.0) / -22.7))
 
-function (ch::KCa)()
-    @variables mKCa(t) V(t)
-    I, Ca = instantiate_variables(ch, currents, sensedvars)
-    g, E = instantiate_parameters(ch, conductances, reversals)
+function (ch::KCa)(n::Neuron)
+    I, Ca, E, V = instantiate_hooks(n, ch, currents, sensed_ions, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
+
+    @variables mKCa(t)
     eqs = [
         D(mKCa) ~ (1 / τm(ch, V)) * (m∞(ch, V, Ca) - mKCa),
         I ~ (g * mKCa^4) * (E - V)
     ]
-    current = [eqs[2]]
+    states, params = vardivide(V, Ca, E, mKCa, I, g)
     defaultmap = [mKCa => ch.mKCa, g => ch.gKCa]
-    return ComponentSystem(ch, ODESystem(eqs, t, [V, Ca, mKCa, I], [g, E]; observed=current, defaults=defaultmap, name=get_name(ch)))
+
+    return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
 end
 
 #################### Delayed rectifier potassium current ######################
@@ -145,15 +155,18 @@ Kdr(x) = Kdr(x, 0.0)
 m∞(::Kdr, V) = 1.0 / (1.0 + exp((V + 12.3) / -11.8));
 τm(::Kdr, V) = 14.4 - 12.8 / (1.0 + exp((V + 28.3) / -19.2))
 
-function (ch::Kdr)()
-    states = @variables mKdr(t) V(t)
-    (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
+function (ch::Kdr)(n::Neuron)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
+    @variables mKdr(t)
+
     eqs = [D(mKdr) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mKdr),
         I ~ (g * mKdr^4) * (E - V)]
-    current = [eqs[2]]
+
+    states, params = vardivide(V, E, mKdr, I, g)
     defaultmap = [mKdr => ch.mKdr, g => ch.gKdr]
-    return ComponentSystem(ch, ODESystem(eqs, t, [V, mKdr, I], [g, E]; observed=current, defaults=defaultmap, name=get_name(ch)))
+
+    return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
 end
 
 #################### H current ####################
@@ -167,15 +180,18 @@ H(x) = H(x, 0.0)
 m∞(::H, V) = 1.0 / (1.0 + exp((V + 75.0) / 5.5))
 τm(::H, V) = (2 / (exp((V + 169.7) / (-11.6)) + exp((V - 26.7) / (14.3))))
 
-function (ch::H)()
-    @variables mH(t) V(t)
-    (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
+function (ch::H)(n::Neuron)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
+    @variables mH(t)
+
     eqs = [D(mH) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mH),
         I ~ g * mH * (E - V)]
-    current = [eqs[2]]
+
+    states, params = vardivide(V, E, mH, I, g)
     defaultmap = [mH => ch.mH, g => ch.gH]
-    return ComponentSystem(ch, ODESystem(eqs, t, [V, mH, I], [g, E]; observed=current, defaults=defaultmap, name=get_name(ch)))
+
+    return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
 end
 
 #################### Leak current #########################
@@ -184,12 +200,14 @@ struct leak{D<:Real} <: FlowChannel(Leak)
     gLeak::D
 end
 
-function (ch::leak)()
-    @variables V(t)
-    (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
+function (ch::leak)(n::Neuron)
+    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+    g, = instantiate_parameters(ch, conductances)
+
     eqs = [I ~ g * (E - V)]
-    current = [eqs[1]]
+
+    states, params = vardivide(V, E, I, g)
     defaultmap = [g => ch.gLeak]
-    return ComponentSystem(ch, ODESystem(eqs, t, [V, I], [g, E]; observed=current, defaults=defaultmap, name=get_name(ch)))
+
+    return ComponentSystem(ch, ODESystem(eqs, t, states, params; defaults=defaultmap, name=get_name(ch)))
 end
