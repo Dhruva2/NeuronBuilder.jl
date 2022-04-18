@@ -62,7 +62,6 @@ function (b::BasicNeuron)(hooks::Integer)
     # build state variables for each of these tracked species 
     tracked_vars = reduce(vcat, tracked .|> shorthand_name) |> instantiate_variables
 
-
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:hooks]]
     my_sum(syns) = hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
     !(hooks == 0) && (syns = reduce(vcat, syns))

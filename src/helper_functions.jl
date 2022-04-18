@@ -20,14 +20,17 @@ shorthand_name(::Type{Calcium}) = :Ca
 shorthand_name(::Type{Proton}) = :H
 shorthand_name(::Type{Leak}) = :Leak
 shorthand_name(::Type{Reversal{T}}) where {T} = Symbol(:E, shorthand_name(T))
-shorthand_name(x::Type{Tuple{T,R}}) where{T,R} = shorthand_name.(x.types)
+shorthand_name(x::Type{Tuple{T,R}}) where {T,R} = shorthand_name.(x.types)
 
-sensed(::FlowChannel{S,A}) where {S<:Tuple,A} = fieldtypes(S)
-actuated(::FlowChannel{S,A}) where {S,A<:Tuple} = fieldtypes(A)
+sensed(::FlowChannel{S,A}) where {S,A} = typeflatten(S)
+actuated(::FlowChannel{S,A}) where {S,A} = typeflatten(A)
 
-sensed(::FlowChannel{S,A}) where {S,A} = (S,)
-actuated(::FlowChannel{S,A}) where {S,A} = (A,)
-
+function typeflatten(s::DataType)
+    map(fieldtypes(s)) do el
+        el <: Tuple && return typeflatten(el)
+        return (el,)
+    end |> Iterators.flatten |> collect |> unique!
+end
 
 sensedvars(i::FlowChannel) =
     map(sensed(i)) do thing
@@ -44,7 +47,7 @@ currents(i::FlowChannel) =
         Symbol(:I, shorthand_name(thing))
     end
 
-conductance(i::FlowChannel) =
+conductances(i::FlowChannel) =
     map(actuated(i)) do thing
         Symbol(:g, shorthand_name(thing))
     end
@@ -100,4 +103,4 @@ function get_from(d::Dict{DataType,SpeciesDynamics}, func)
     return reduce(vcat, muddled)::Vector{Num}
 end
 
-#isLeak(c::IonChannel) = typeof(c) in [NeuronBuilder.Liu.Leak{Float64}, NeuronBuilder.Prinz.Leak{Float64}]
+isLeak(c::FlowChannel) = typeof(c) in [NeuronBuilder.Liu.leak{Float64}, NeuronBuilder.Prinz.leak{Float64}]

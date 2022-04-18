@@ -16,7 +16,7 @@ h∞(::Na, V) = 1.0 / (1.0 + exp((V + 48.9) / 5.18))
 function (ch::Na)()
     @variables mNa(t) hNa(t) V(t)
     (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductance)
+    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
 
     eqs = [D(mNa) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mNa),
         D(hNa) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hNa),
@@ -44,7 +44,7 @@ h∞(::CaS, V) = 1.0 / (1.0 + exp((V + 60.0) / 6.2))
 function (ch::CaS)()
     @variables mCaS(t) hCaS(t) V(t)
     (I,), (Ca,), (E,) = instantiate_variables(ch, currents, sensedvars, reversals)
-    (g,) = instantiate_parameters(ch, conductance)
+    (g,) = instantiate_parameters(ch, conductances)
 
     eqs = [D(mCaS) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mCaS),
         D(hCaS) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hCaS),
@@ -71,7 +71,7 @@ h∞(::CaT, V) = 1.0 / (1.0 + exp((V + 32.1) / 5.5))
 function (ch::CaT)()
     @variables mCaT(t) hCaT(t) V(t)
     (I,), (Ca,), (E,) = instantiate_variables(ch, currents, sensedvars, reversals)
-    (g,) = instantiate_parameters(ch, conductance)
+    (g,) = instantiate_parameters(ch, conductances)
 
     eqs = [D(mCaT) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mCaT),
         D(hCaT) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hCaT),
@@ -97,7 +97,7 @@ h∞(::Ka, V) = 1.0 / (1.0 + exp((V + 56.9) / 4.9))
 
 function (ch::Ka)()
     (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductance)
+    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
     states = @variables mKa(t) hKa(t) V(t)
     eqs = [D(mKa) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mKa),
         D(hKa) ~ (1 / τh(ch, V)) * (h∞(ch, V) - hKa),
@@ -121,7 +121,7 @@ m∞(::KCa, V, Ca) = (Ca / (Ca + 3.0)) / (1.0 + exp((V + 28.3) / -12.6));
 function (ch::KCa)()
     @variables mKCa(t) V(t)
     I, Ca = instantiate_variables(ch, currents, sensedvars)
-    g, E = instantiate_parameters(ch, conductance, reversals)
+    g, E = instantiate_parameters(ch, conductances, reversals)
     eqs = [
         D(mKCa) ~ (1 / τm(ch, V)) * (m∞(ch, V, Ca) - mKCa),
         I ~ (g * mKCa^4) * (E - V)
@@ -144,7 +144,7 @@ m∞(::Kdr, V) = 1.0 / (1.0 + exp((V + 12.3) / -11.8));
 function (ch::Kdr)()
     states = @variables mKdr(t) V(t)
     (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductance)
+    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
     eqs = [D(mKdr) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mKdr),
         I ~ (g * mKdr^4) * (E - V)]
     current = [eqs[2]]
@@ -166,7 +166,7 @@ m∞(::H, V) = 1.0 / (1.0 + exp((V + 70.0) / 6.0))
 function (ch::H)()
     @variables mH(t) V(t)
     (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductance)
+    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
     eqs = [D(mH) ~ (1 / τm(ch, V)) * (m∞(ch, V) - mH),
         I ~ g * mH * (E - V)]
     current = [eqs[2]]
@@ -183,7 +183,7 @@ end
 function (ch::leak)()
     @variables V(t)
     (I,) = instantiate_variables(ch, currents)
-    (E,), (g,) = instantiate_parameters(ch, reversals, conductance)
+    (E,), (g,) = instantiate_parameters(ch, reversals, conductances)
     eqs = [I ~ g * (E - V)]
     current = [eqs[1]]
     defaultmap = [g => ch.gLeak]

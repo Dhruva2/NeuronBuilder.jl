@@ -34,8 +34,8 @@ end
 
 ### channels always sense the reversal of the currents they actuate
 # generalize for more than actuator
-FlowChannel(T) = FlowChannel{Reversal{T},T}
-FlowChannel(S, A) = FlowChannel{Tuple{S,Reversal{A}},A}
+FlowChannel(T) = FlowChannel{Tuple{Reversal{T}},Tuple{T}}
+FlowChannel(S, A) = FlowChannel{Tuple{S,Reversal{A}},Tuple{A}}
 
 abstract type Geometry end
 struct NoGeometry{C} <: Geometry
@@ -45,20 +45,11 @@ capacitance(g::NoGeometry) = g.capacitance
 
 abstract type PlasticityRule{S} end
 
-function type_ps(t::Type)
-    isempty(t.parameters) && return (t,)
-    return t.parameters |> Tuple
-end
-function merge_types(t1::Type, t2::Type)
-    ps = (type_ps(t1)..., type_ps(t2)...) |> unique
-    return Tuple{ps...}
-end
 
-struct PlasticisedChannel{S,S2,A} <: FlowChannel{merge_types(Type{S}, Type{S2}),A}
+struct PlasticisedChannel{S,S2,A} <: FlowChannel{Tuple{S,S2},A}
     channel::FlowChannel{S,A}
     mutation::PlasticityRule{S2}
 end
-
 
 ######### Geometries ##############
 # is_geometric(::Compartment{T}) = T

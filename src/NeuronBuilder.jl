@@ -14,7 +14,7 @@ export Geometry, NoGeometry, capacitance
 
 include("helper_functions.jl")
 export get_name, shorthand_name, sensed, actuated, get_sensor, get_actuator
-export sensedvars, reversals, currents, conductance, instantiate_variables, instantiate_parameters
+export sensedvars, reversals, currents, conductances, instantiate_variables, instantiate_parameters
 
 include("assets/Liu/Liu.jl")
 using .Liu
@@ -34,7 +34,7 @@ include("build_network.jl")
 export build_network
 
 include("plasticity.jl")
-export OLeary_reg
+export OLeary_reg, OLearyCalcRegulation, Franci_reg, FranciCalcRegulation
 
 
 end
