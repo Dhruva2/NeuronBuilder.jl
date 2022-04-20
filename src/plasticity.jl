@@ -19,7 +19,7 @@ make new component system from old component system.
 """
 
 function (o::OLearyCalcRegulation)(ch::FlowChannel, n::Neuron)
-    sys = ch(n).sys
+    sys = ch(n)
 
     (var_conductance,), subst_eqs, _parameters, _defaults, _observed = param_to_state(sys, ch, conductances)
 
@@ -38,7 +38,7 @@ function (o::OLearyCalcRegulation)(ch::FlowChannel, n::Neuron)
     states = [ModelingToolkit.states(sys)..., new_states...]
     parameters = [_parameters..., new_params...]
     plast_sys = ODESystem(new_eqs, t, states, parameters; observed=_observed, defaults=new_defaultmap, name=Symbol(get_name(ch), :_regul))
-    return ComponentSystem(plast_ch, plast_sys)
+    return plast_sys
 end
 
 function param_to_state(sys, ch, args::Function...)
