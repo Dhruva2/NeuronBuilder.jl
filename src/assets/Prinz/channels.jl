@@ -192,7 +192,7 @@ end
 
 #################### Leak current #########################
 
-struct leak{D<:Real} <: FlowChannel(Leak)
+struct leak{D<:Real} <: FlowChannel(PseudoIon)
     gLeak::D
 end
 

@@ -6,6 +6,8 @@ my_pre(::Synapse, syn_sys::AbstractTimeDependentSystem) = syn_sys.Vpre
 my_post(::Synapse, syn_sys::AbstractTimeDependentSystem) = syn_sys.Vpost
 post_connector(::Synapse) = :Isyn
 
+
+
 mutable struct Chol{T<:AbstractFloat} <: Synapse
     ḡChol::T
     s::T
@@ -36,9 +38,9 @@ s̄(syn::Glut, Vpre) = 1.0 / (1.0 + exp((syn.Vth - Vpre) / syn.δ))
 syn_current(::Glut, sys::ODESystem) = sys.IGlut
 
 
-function channel_dynamics(ch::Chol, Vpre, Vpost)
+function (ch::Chol)(n_pre::Neuron, n_post::Neuron)
     states = @variables s(t) IChol(t)
-    parameters = @parameters ḡChol
+    @parameters ḡChol
     eqs = [D(s) ~ (1 / τs(ch, Vpre)) * (s̄(ch, Vpre) - s),
         IChol ~ -ḡChol * s * (Vpost - ch.Eₛ)]
     current = [eqs[2]]

@@ -7,7 +7,7 @@ const D = Differential(t)
 export t, D
 
 include("typetree.jl")
-export Species, SpeciesProperty, Ion, SpeciesDynamics, Voltage, Sodium, Potassium, Calcium, Proton, Leak, Reversal, Current, Conductance, mRNA
+export Species, SpeciesProperty, Ion, SpeciesDynamics, Voltage, Sodium, Potassium, Calcium, Proton, PseudoIon, Reversal, Current, Conductance, mRNA
 export Compartment, Component, FlowChannel, Neuron, Synapse, EmptyConnection, ComponentSystem
 export PlasticityRule, PlasticisedChannel
 export Geometry, NoGeometry, capacitance

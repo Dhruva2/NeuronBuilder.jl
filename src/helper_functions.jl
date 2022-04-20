@@ -3,6 +3,10 @@ function get_name(ch::Component)
     Base.typename(ch |> typeof).name |> Symbol
 end
 
+function get_name(ch)
+    Base.typename(ch).name |> Symbol
+end
+
 function get_name(p::PlasticisedChannel)
     Symbol(
         get_name(p.channel),
@@ -16,7 +20,7 @@ shorthand_name(::Type{Sodium}) = :Na
 shorthand_name(::Type{Potassium}) = :K
 shorthand_name(::Type{Calcium}) = :Ca
 shorthand_name(::Type{Proton}) = :H
-shorthand_name(::Type{Leak}) = :Leak
+shorthand_name(::Type{PseudoIon}) = :Leak
 shorthand_name(::Type{Reversal{T}}) where {T} = Symbol(:E, shorthand_name(T))
 shorthand_name(::Type{Current{T}}) where {T} = Symbol(:I, shorthand_name(T))
 shorthand_name(::Type{Conductance{T}}) where {T} = Symbol(:g, shorthand_name(T))
@@ -28,6 +32,10 @@ shorthand_name(x::Type{Tuple{T,R}}) where {T,R} = shorthand_name.(x.types)
 sensed(::FlowChannel{S,A}) where {S,A} = typeflatten(S)
 actuated(::FlowChannel{S,A}) where {S,A} = typeflatten(A)
 
+
+
+
+
 function typeflatten(s::DataType)
     map(fieldtypes(s)) do el
         el <: Tuple && return typeflatten(el)
@@ -38,32 +46,51 @@ end
 voltage(el) = (Voltage,)
 ionic(x) = x <: Ion
 
-currents(i::FlowChannel) =
+currents(i::Channel) =
     map(filter(ionic, actuated(i))) do thing
         Current{thing}
     end
 
-sensedvars(i::FlowChannel) =
+sensedvars(i::Channel) =
     map(sensed(i)) do thing
         Symbol(thing |> shorthand_name)
     end
 
-mrna(i::FlowChannel) =
+mrna(i::Channel) =
     map(filter(ionic, actuated(i))) do thing
         mRNA{thing}
     end
 
-reversals(i::FlowChannel) =
+reversals(i::Channel) =
     map(filter(ionic, actuated(i))) do thing
         Reversal{thing}
     end
 
-conductances(i::FlowChannel) =
+conductances(i::Channel) =
     map(filter(ionic, actuated(i))) do thing
         Conductance{thing}
     end
 
-sensed_ions(i::FlowChannel) = filter(ionic, sensed(i))
+sensed_ions(i::Channel) = filter(ionic, sensed(i))
+
+
+
+
+
+pre_sensed(::Synapse{Spre,Spost,A}) where {Spre,Spost,A} = typeflatten(Spre)
+pre_sensed(::Synapse{Spre,Spost,A}) where {Spre,Spost,A} = typeflatten(Spost)
+actuated(::Synapse{Spre,Spost,A}) where {Spre,Spost,A} = typeflatten(A)
+
+
+
+
+
+
+
+
+
+
+
 
 instantiate_hooks(pre::Compartment, to::Component, args::Function...) =
     map(args) do fun

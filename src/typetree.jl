@@ -3,7 +3,6 @@
 abstract type Species end
 abstract type SpeciesProperty{S<:Species} end
 abstract type Ion <: Species end
-abstract type PseudoIon <: Ion end
 abstract type SpeciesDynamics{F} end
 
 """
@@ -15,19 +14,35 @@ struct Sodium <: Ion end
 struct Potassium <: Ion end
 struct Calcium <: Ion end
 struct Proton <: Ion end
-struct Leak <: PseudoIon end
+struct Chloride <: Ion end
+struct PseudoIon <: Ion end
+
+struct Synaptic <: Species end
 
 abstract type Reversal{I<:Ion} <: SpeciesProperty{I} end
 abstract type Current{I<:Ion} <: SpeciesProperty{I} end
 abstract type Conductance{I<:Ion} <: SpeciesProperty{I} end
 abstract type mRNA{I<:Ion} <: SpeciesProperty{I} end
 
+
+
+
 abstract type Component end
 abstract type Compartment <: Component end
-abstract type FlowChannel{Sensors<:Tuple,Actuators<:Tuple} <: Component end
+abstract type Channel <: Component end
+
+abstract type FlowChannel{Sensors<:Tuple,Actuators<:Tuple} <: Channel end
+abstract type Synapse{Sensors_Pre,Sensors_Post,Actuators} <: Channel end
+
 # channels always sense the reversal of the currents they actuate
 FlowChannel(T) = FlowChannel{Tuple{Reversal{T}},Tuple{T}}
 FlowChannel(S, A) = FlowChannel{Tuple{S,Reversal{A}},Tuple{A}}
+
+
+# sensed from pre neuron, post neuron and actuated (onto post neuron)
+Synapse(Spre, Spost, A) = Synapse{Tuple{Spre},Tuple{Spost},Tuple{A}}
+struct EmptyConnection <: Synapse(Nothing, Nothing, Nothing) end
+
 
 abstract type Neuron <: Compartment end
 dynamics(n::Neuron) = n.dynamics
@@ -37,8 +52,7 @@ has_dynamics(n::Neuron, species) = haskey(dynamics(n), species)
 has_dynamics(n::Neuron, ::Type{Current{I}}) where {I} = true
 has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
 
-abstract type Synapse <: Component end
-struct EmptyConnection <: Synapse end
+
 
 
 abstract type Geometry end
