@@ -63,3 +63,9 @@ function (syn::Synapse)(; name=get_name(syn))
         name=name, defaults=defaultmap)
     return ComponentSystem(syn, sys)
 end
+
+struct directed_synapse{S<:Synapse,N} <: Synapse
+    pre_n::N
+    post_n::N
+    syn::S
+end

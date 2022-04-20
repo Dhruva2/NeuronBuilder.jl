@@ -42,8 +42,8 @@ building neuron
 # add b as input to channels so they can sense whether their inputs are parmeters or not, using b.dynamics
 """
 
-function (b::BasicNeuron)(hooks::Integer)
-
+function (b::BasicNeuron)(;incoming_connections::Integer=0)
+    #shared -> hooks
     # e.g. species = Voltage or species = Potassium
     has_dynamics(species) = haskey(b.dynamics, species)
 
@@ -64,9 +64,9 @@ function (b::BasicNeuron)(hooks::Integer)
         tracked_names[param_indices] .|> shorthand_name
     ) |> instantiate_parameters
 
-    syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:hooks]]
-    my_sum(syns) = hooks == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
-    !(hooks == 0) && (syns = reduce(vcat, syns))
+    syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:incoming_connections]]
+    my_sum(syns) = incoming_connections == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
+    !(incoming_connections == 0) && (syns = reduce(vcat, syns))
     chs = [ch(b) for ch in b.channels]
 
     tracked_fluxes = map(tracked_names[state_indices]) do thing
@@ -128,5 +128,5 @@ function (b::BasicNeuron)(hooks::Integer)
         defaults=merge(state_defaults, parameter_defaults, somatic_state_defaults, somatic_param_defaults),
         name=b.name
     )
-    return ComponentSystem(b, (hooks == 0) ? structural_simplify(sys) : sys)
+    return ComponentSystem(b, (incoming_connections == 0) ? structural_simplify(sys) : sys)
 end

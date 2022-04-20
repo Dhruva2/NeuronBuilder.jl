@@ -56,7 +56,7 @@ abstract type PlasticityRule{S} end
 
 struct PlasticisedChannel{S,S2,A} <: FlowChannel{Tuple{S,S2},A}
     channel::FlowChannel{S,A}
-    mutation::PlasticityRule{S2}
+    modification::PlasticityRule{S2}
 end
 
 ######### Geometries ###########

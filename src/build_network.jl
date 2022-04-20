@@ -1,3 +1,8 @@
+function build_group(neurons::Vector{N}; name=:group) where {N<:Any}
+    eqs = Array{Equation,1}(undef, 0)
+    ODESystem(eqs, t, [], []; name=name, systems=[el.sys for el in neurons])
+end
+
 function add_connection(group, pre, post, syn::EmptyConnection; kwargs...)
     return group
 end

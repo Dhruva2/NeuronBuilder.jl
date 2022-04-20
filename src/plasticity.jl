@@ -1,6 +1,6 @@
 
 function (p::PlasticisedChannel)(n::Neuron)
-    p.mutation(p.channel, n)
+    p.modification(p.channel, n)
 end
 
 struct OLearyCalcRegulation{T} <: PlasticityRule{Calcium}

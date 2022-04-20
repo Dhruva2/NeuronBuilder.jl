@@ -33,47 +33,47 @@ somatic_parameters = Dict(
 #these are specifically in Table 2: AB2, LP4, PY1 for figure 3e
 function AB_Neuron(num_connections)
     AB2_ch = [
-        Prinz.Na(100.0 * Prinz_conv), 
-        Prinz.CaS(6.0 * Prinz_conv), 
-        Prinz.CaT(2.5 * Prinz_conv), 
+        Prinz.Na(100.0 * Prinz_conv),
+        Prinz.CaS(6.0 * Prinz_conv),
+        Prinz.CaT(2.5 * Prinz_conv),
         Prinz.H(0.01 * Prinz_conv),
         Prinz.Ka(50.0 * Prinz_conv),
         Prinz.KCa(5.0 * Prinz_conv),
         Prinz.Kdr(100.0 * Prinz_conv),
         Prinz.leak(0.0 * Prinz_conv)
-        ]
+    ]
     b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, AB2_ch, :AB)
-    return b(num_connections)
+    return b(incoming_connections=num_connections)
 end
 
 function PY_Neuron(num_connections)
-    PY1_ch = [Prinz.Na(100.0 * Prinz_conv), 
-    Prinz.CaS(2.0 * Prinz_conv), 
-    Prinz.CaT(2.4 * Prinz_conv), 
-    Prinz.H(0.05 * Prinz_conv), 
-    Prinz.Ka(50.0 * Prinz_conv), 
-    Prinz.KCa(0.0 * Prinz_conv), 
-    Prinz.Kdr(125.0 * Prinz_conv), 
-    Prinz.leak(0.01 * Prinz_conv)
+    PY1_ch = [Prinz.Na(100.0 * Prinz_conv),
+        Prinz.CaS(2.0 * Prinz_conv),
+        Prinz.CaT(2.4 * Prinz_conv),
+        Prinz.H(0.05 * Prinz_conv),
+        Prinz.Ka(50.0 * Prinz_conv),
+        Prinz.KCa(0.0 * Prinz_conv),
+        Prinz.Kdr(125.0 * Prinz_conv),
+        Prinz.leak(0.01 * Prinz_conv)
     ]
     somatic_parameters[Voltage] = -55.0
     b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, PY1_ch, :PY)
-    return b(num_connections)
+    return b(incoming_connections=num_connections)
 end
 
 function LP_Neuron(num_connections)
-    LP4_ch = [Prinz.Na(100.0 * Prinz_conv), 
-    Prinz.CaS(4.0 * Prinz_conv), 
-    Prinz.CaT(0.0 * Prinz_conv), 
-    Prinz.H(0.05 * Prinz_conv), 
-    Prinz.Ka(20.0 * Prinz_conv), 
-    Prinz.KCa(0.0 * Prinz_conv), 
-    Prinz.Kdr(25.0 * Prinz_conv), 
-    Prinz.leak(0.03 * Prinz_conv)
+    LP4_ch = [Prinz.Na(100.0 * Prinz_conv),
+        Prinz.CaS(4.0 * Prinz_conv),
+        Prinz.CaT(0.0 * Prinz_conv),
+        Prinz.H(0.05 * Prinz_conv),
+        Prinz.Ka(20.0 * Prinz_conv),
+        Prinz.KCa(0.0 * Prinz_conv),
+        Prinz.Kdr(25.0 * Prinz_conv),
+        Prinz.leak(0.03 * Prinz_conv)
     ]
     somatic_parameters[Voltage] = -65.0
     b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, LP4_ch, :LP)
-    return b(num_connections)
+    return b(incoming_connections=num_connections)
 end
 
 function nodes(i)
@@ -106,9 +106,57 @@ function edges(i, j)
 end
 
 tspan = (0.0, 10000.0)
-stg = build_network(nodes, edges, 1:3, name = :stg)
-prob = ODEProblem(stg, [], tspan, [];jac=true)
+stg = @time build_network(nodes, edges, 1:3, name=:stg)
+prob = ODEProblem(stg, [], tspan, []; jac=true)
 
 @time sol = solve(prob, AutoTsit5(Rosenbrock23()))
 
 plot(sol, xlims=(5000, 10000), ylims=(-80, 70); vars=[stg.AB₊V, stg.LP₊V, stg.PY₊V, stg.PY₊CaS₊ICa], layout=(4, 1))
+
+
+# AB = AB_Neuron(1)
+# LP = LP_Neuron(3)
+# PY = PY_Neuron(3)
+# neurons = [AB, PY, LP]
+
+# ABLP_chol = directed_synapse(AB, LP, Chol(30.0 * synaptic_conv))
+# ABPY_chol = directed_synapse(AB, PY, Chol(3.0 * synaptic_conv))
+# ABLP_glut = directed_synapse(AB, LP, Glut(30.0 * synaptic_conv))
+# ABPY_glut = directed_synapse(AB, PY, Glut(10.0 * synaptic_conv))
+
+# LPAB_glut = directed_synapse(LP, AB, Glut(30.0 * synaptic_conv)) 
+# LPPY_glut = directed_synapse(LP, PY, Glut(1.0 * synaptic_conv))
+
+# PYLP_glut = directed_synapse(PY, LP, Glut(30.0 * synaptic_conv))
+
+# connections = [LPAB_glut, ABPY_chol, ABPY_glut, LPPY_glut, ABLP_chol, ABLP_glut, PYLP_glut]
+
+# function add_all_connections(neurons, connections)
+#     grp = build_group(neurons; name=:STG)
+#     num_neurons = length(neurons)
+#     num_incoming_connections = [sum(x->x.post_n == el, connections) for el in neurons]
+#     fill_counter = ones(Int64, num_neurons)
+#     for (el, j) in zip(neurons, 1:num_neurons)
+#         for dir_syn in connections
+#             while fill_counter[j] <= num_incoming_connections[i]
+#                 (dir_syn.post_n == el) && (grp = add_connection(grp, dir_syn.pre_n, dir_syn.post_n, dir_syn.syn; i=fill_counter[j])) && (fill_counter[j] += 1)
+#             end
+#         end
+#     end
+#     return structural_simplify(grp)
+# end
+
+# stg = add_all_connections(neurons, connections)
+
+
+# grp = add_connection(grp, AB, LP, ABLP_chol; i=1)
+# grp = add_connection(grp, AB, LP, ABLP_glut; i=2)
+# grp = add_connection(grp, PY, LP, PYLP_glut; i=3)
+
+# grp = add_connection(grp, LP, AB, LPAB_glut; i=1)
+
+# grp = add_connection(grp, LP, PY, LPPY_glut; i=1)
+# grp = add_connection(grp, AB, PY, ABPY_glut; i=2)
+# grp = add_connection(grp, AB, PY, ABPY_chol; i=3)
+
+# STG = structural_simplify(grp)

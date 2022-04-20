@@ -31,7 +31,7 @@ somatic_parameters = Dict(
 
 b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, channels, :test_Prinz)
 
-neur = b(0)
+neur = b()
 
 prob = ODEProblem(neur.sys, [], (0.0, 5000.0), [])
 

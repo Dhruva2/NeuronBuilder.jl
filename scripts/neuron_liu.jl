@@ -16,7 +16,7 @@ channels = [Liu.Na(700.0 * Liu_conv), Liu.CaS(4.0 * Liu_conv), Liu.CaT(2.0 * Liu
 Ca∞ = 0.05
 fxarea = 14.96 * 0.0628
 
-defaults = Dict(Voltage => BasicVoltageDynamics(),
+dynamics = Dict(Voltage => BasicVoltageDynamics(),
     Calcium => Liu.CalciumDynamics(τCa, Ca∞, fxarea), 
     Reversal{Calcium} => Liu.CaReversalDynamics())
 
@@ -29,11 +29,11 @@ somatic_parameters = Dict(
     Calcium => 0.05,
     Reversal{Calcium} => 0.0)
 
-b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, channels, :test_Liu)
+b = BasicNeuron(NoGeometry(Cm), dynamics, somatic_parameters, channels, :test_Liu) #point neuron
 
-neur = b(0)
+neur = b() 
 
-prob = ODEProblem(neur.sys, [], (0.0, 5000.0), [])
+prob = ODEProblem(neur.sys, [], (0.0, 5000.0), []; jac=true)
 
-sol = solve(prob, Tsit5())
+sol = @time solve(prob, Tsit5())
 plot(sol)

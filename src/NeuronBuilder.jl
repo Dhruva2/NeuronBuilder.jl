@@ -28,10 +28,10 @@ include("neurons.jl")
 export BasicNeuron, BasicVoltageDynamics, EmptyNeuron
 
 include("synapses.jl")
-export Chol, Glut
+export Chol, Glut, directed_synapse
 
 include("build_network.jl")
-export build_network
+export build_network, build_group, add_connection
 
 include("plasticity.jl")
 export OLeary_reg, OLearyCalcRegulation
