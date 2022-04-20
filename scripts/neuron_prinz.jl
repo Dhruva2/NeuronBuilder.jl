@@ -33,7 +33,7 @@ b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, channels, :test_Pr
 
 neur = b()
 
-prob = ODEProblem(neur.sys, [], (0.0, 5000.0), [])
+prob = ODEProblem(neur, [], (0.0, 5000.0), [])
 
 sol = solve(prob, AutoTsit5(Rosenbrock23()))
 plot(sol)

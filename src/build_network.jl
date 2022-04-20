@@ -48,3 +48,17 @@ function build_network(nodefn, edgefn, which_nodes::AbstractRange; name=:network
     end
     return network |> structural_simplify
 end
+
+function add_all_connections(neurons, connections)
+    grp = build_group(neurons; name=:STG)
+    num_neurons = length(neurons)
+    num_incoming_connections = [sum(x -> x.post_n == el, connections) for el in neurons]
+    fill_counter = ones(Int64, num_neurons)
+    for (el, j) in zip(neurons, 1:num_neurons)
+        for dir_syn in filter(x -> x.post_n == el, connections)
+            grp = add_connection(grp, dir_syn.pre_n, dir_syn.post_n, dir_syn.syn; i=fill_counter[j])
+            fill_counter[j] += 1
+        end
+    end
+    return structural_simplify(grp)
+end

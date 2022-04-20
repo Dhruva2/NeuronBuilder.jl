@@ -28,6 +28,7 @@ abstract type FlowChannel{Sensors<:Tuple,Actuators<:Tuple} <: Component end
 # channels always sense the reversal of the currents they actuate
 FlowChannel(T) = FlowChannel{Tuple{Reversal{T}},Tuple{T}}
 FlowChannel(S, A) = FlowChannel{Tuple{S,Reversal{A}},Tuple{A}}
+FlowChannel() = FlowChannel{Tuple{Nothing}, Tuple{Nothing}}
 
 abstract type Neuron <: Compartment end
 dynamics(n::Neuron) = n.dynamics

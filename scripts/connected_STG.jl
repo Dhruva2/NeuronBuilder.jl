@@ -111,52 +111,34 @@ prob = ODEProblem(stg, [], tspan, []; jac=true)
 
 @time sol = solve(prob, AutoTsit5(Rosenbrock23()))
 
-plot(sol, xlims=(5000, 10000), ylims=(-80, 70); vars=[stg.AB₊V, stg.LP₊V, stg.PY₊V, stg.PY₊CaS₊ICa], layout=(4, 1))
+plot(sol, xlims=(5000, 10000), fg_legend=:transparent; vars=[stg.AB₊V, stg.LP₊V, stg.PY₊V, stg.PY₊CaS₊ICa], layout=(4, 1))
 
 
-# AB = AB_Neuron(1)
-# LP = LP_Neuron(3)
-# PY = PY_Neuron(3)
-# neurons = [AB, PY, LP]
+"""
+Another way of adding connections without having to specify a connectivity matrix (no empty connections)
+"""
+AB = AB_Neuron(1)
+LP = LP_Neuron(3)
+PY = PY_Neuron(3)
+neurons = [AB, PY, LP]
 
-# ABLP_chol = directed_synapse(AB, LP, Chol(30.0 * synaptic_conv))
-# ABPY_chol = directed_synapse(AB, PY, Chol(3.0 * synaptic_conv))
-# ABLP_glut = directed_synapse(AB, LP, Glut(30.0 * synaptic_conv))
-# ABPY_glut = directed_synapse(AB, PY, Glut(10.0 * synaptic_conv))
+ABLP_chol = directed_synapse(AB, LP, Chol(30.0 * synaptic_conv))
+ABPY_chol = directed_synapse(AB, PY, Chol(3.0 * synaptic_conv))
+ABLP_glut = directed_synapse(AB, LP, Glut(30.0 * synaptic_conv))
+ABPY_glut = directed_synapse(AB, PY, Glut(10.0 * synaptic_conv))
 
-# LPAB_glut = directed_synapse(LP, AB, Glut(30.0 * synaptic_conv)) 
-# LPPY_glut = directed_synapse(LP, PY, Glut(1.0 * synaptic_conv))
+LPAB_glut = directed_synapse(LP, AB, Glut(30.0 * synaptic_conv))
+LPPY_glut = directed_synapse(LP, PY, Glut(1.0 * synaptic_conv))
 
-# PYLP_glut = directed_synapse(PY, LP, Glut(30.0 * synaptic_conv))
+PYLP_glut = directed_synapse(PY, LP, Glut(30.0 * synaptic_conv))
 
-# connections = [LPAB_glut, ABPY_chol, ABPY_glut, LPPY_glut, ABLP_chol, ABLP_glut, PYLP_glut]
+connections = [LPAB_glut, ABPY_chol, ABPY_glut, LPPY_glut, ABLP_chol, ABLP_glut, PYLP_glut]
 
-# function add_all_connections(neurons, connections)
-#     grp = build_group(neurons; name=:STG)
-#     num_neurons = length(neurons)
-#     num_incoming_connections = [sum(x->x.post_n == el, connections) for el in neurons]
-#     fill_counter = ones(Int64, num_neurons)
-#     for (el, j) in zip(neurons, 1:num_neurons)
-#         for dir_syn in connections
-#             while fill_counter[j] <= num_incoming_connections[i]
-#                 (dir_syn.post_n == el) && (grp = add_connection(grp, dir_syn.pre_n, dir_syn.post_n, dir_syn.syn; i=fill_counter[j])) && (fill_counter[j] += 1)
-#             end
-#         end
-#     end
-#     return structural_simplify(grp)
-# end
+stg_2 = @time add_all_connections(neurons, connections)
+prob_2 = ODEProblem(stg_2, [], tspan, []; jac=true)
 
-# stg = add_all_connections(neurons, connections)
+@time sol_2 = solve(prob_2, AutoTsit5(Rosenbrock23()))
+
+plot(sol_2, xlims=(5000, 10000), fg_legend = :transparent; vars=[stg_2.AB₊V, stg_2.LP₊V, stg_2.PY₊V, stg_2.PY₊CaS₊ICa], layout=(4, 1))
 
 
-# grp = add_connection(grp, AB, LP, ABLP_chol; i=1)
-# grp = add_connection(grp, AB, LP, ABLP_glut; i=2)
-# grp = add_connection(grp, PY, LP, PYLP_glut; i=3)
-
-# grp = add_connection(grp, LP, AB, LPAB_glut; i=1)
-
-# grp = add_connection(grp, LP, PY, LPPY_glut; i=1)
-# grp = add_connection(grp, AB, PY, ABPY_glut; i=2)
-# grp = add_connection(grp, AB, PY, ABPY_chol; i=3)
-
-# STG = structural_simplify(grp)

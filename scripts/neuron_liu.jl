@@ -4,9 +4,7 @@ Liu bursting neuron script
 
 using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
 
-const Area = 0.0628 # Prinz/Liu 0.0628 mm2
 const Cm = 10.0 # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
-
 Liu_conv = Cm
 
 channels = [Liu.Na(700.0 * Liu_conv), Liu.CaS(4.0 * Liu_conv), Liu.CaT(2.0 * Liu_conv), Liu.Ka(50.0 * Liu_conv), Liu.KCa(40.0 * Liu_conv),

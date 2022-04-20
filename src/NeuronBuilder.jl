@@ -31,7 +31,7 @@ include("synapses.jl")
 export Chol, Glut, directed_synapse
 
 include("build_network.jl")
-export build_network, build_group, add_connection
+export build_network, build_group, add_connection, add_all_connections
 
 include("plasticity.jl")
 export OLeary_reg, OLearyCalcRegulation
