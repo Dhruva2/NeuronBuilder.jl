@@ -17,7 +17,7 @@ Ca∞ = 0.05
 fxarea = 14.96 * 0.0628
 
 dynamics = Dict(Voltage => BasicVoltageDynamics(),
-    Calcium => Liu.CalciumDynamics(τCa, Ca∞, fxarea), 
+    Calcium => Liu.CalciumDynamics(τCa, Ca∞, fxarea),
     Reversal{Calcium} => Liu.CaReversalDynamics())
 
 somatic_parameters = Dict(
@@ -31,9 +31,9 @@ somatic_parameters = Dict(
 
 b = BasicNeuron(NoGeometry(Cm), dynamics, somatic_parameters, channels, :test_Liu) #point neuron
 
-neur = b() 
+neur = b()
 
-prob = ODEProblem(neur.sys, [], (0.0, 5000.0), []; jac=true)
+prob = ODEProblem(neur, [], (0.0, 5000.0), []; jac=true)
 
 sol = @time solve(prob, Tsit5())
 plot(sol)

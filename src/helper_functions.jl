@@ -106,24 +106,24 @@ instantiate_parameters(v::Vector{Symbol}) =
     end |> Iterators.flatten |> collect
 
 
-get_actuator(c::ComponentSystem{C,S}, v::Type{Voltage}) where {C<:FlowChannel,S} =
-    sum(currents(c.c)) do I
-        ModelingToolkit.getvar(c.sys, shorthand_name(I); namespace=true)
+get_actuator(c::FlowChannel, sys::ODESystem, v::Type{Voltage}) =
+    sum(currents(c)) do I
+        ModelingToolkit.getvar(sys, shorthand_name(I); namespace=true)
     end
 
-function get_actuator(c::ComponentSystem{C,S}, f::DataType) where {C<:FlowChannel,S}
-    indx = findfirst(x -> x == f, actuated(c.c))
+function get_actuator(c::FlowChannel, sys::ODESystem, f::DataType)
+    indx = findfirst(x -> x == f, actuated(c))
     isnothing(indx) && return Num(0.0)
-    return ModelingToolkit.getvar(c.sys, shorthand_name.(currents(c.c))[indx]; namespace=true)
+    return ModelingToolkit.getvar(sys, shorthand_name.(currents(c))[indx]; namespace=true)
 end
 
-function get_sensor(c::ComponentSystem{C,S}, f::DataType) where {C<:FlowChannel,S}
-    if f ∈ sensed(c.c)
-        return ModelingToolkit.getvar(c.sys, shorthand_name(f); namespace=true)
+function get_sensor(c::FlowChannel, sys::ODESystem, f::DataType)
+    if f ∈ sensed(c)
+        return ModelingToolkit.getvar(sys, shorthand_name(f); namespace=true)
     end
 end
-get_sensor(c::ComponentSystem{C,S}, f::Type{Voltage}) where {C<:FlowChannel,S} =
-    ModelingToolkit.getvar(c.sys, shorthand_name(f); namespace=true)
+get_sensor(c::FlowChannel, sys::ODESystem, f::Type{Voltage}) =
+    ModelingToolkit.getvar(sys, shorthand_name(f); namespace=true)
 
 get_parameters(::SpeciesDynamics) = nothing
 get_states(::SpeciesDynamics) = nothing

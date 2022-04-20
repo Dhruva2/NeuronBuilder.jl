@@ -42,7 +42,7 @@ building neuron
 # add b as input to channels so they can sense whether their inputs are parmeters or not, using b.dynamics
 """
 
-function (b::BasicNeuron)(;incoming_connections::Integer=0)
+function (b::BasicNeuron)(; incoming_connections::Integer=0)
     #shared -> hooks
     # e.g. species = Voltage or species = Potassium
     has_dynamics(species) = haskey(b.dynamics, species)
@@ -70,8 +70,8 @@ function (b::BasicNeuron)(;incoming_connections::Integer=0)
     chs = [ch(b) for ch in b.channels]
 
     tracked_fluxes = map(tracked_names[state_indices]) do thing
-        sum(chs) do ch
-            get_actuator(ch, thing)
+        sum(zip(b.channels, chs)) do (channel, channel_sys)
+            get_actuator(channel, channel_sys, thing)
         end
     end
 
@@ -80,11 +80,11 @@ function (b::BasicNeuron)(;incoming_connections::Integer=0)
 
     # hook connections between channel sensors and tracked variables. 
     outward_connections = reduce(vcat, map(tracked_names, tracked) do species, variable
-        [variable ~ get_sensor(ch, species) for ch in chs if (get_sensor(ch, species) !== nothing)]
+        [variable ~ get_sensor(ch, ch_sys, species) for (ch, ch_sys) in zip(b.channels, chs) if (get_sensor(ch, ch_sys, species) !== nothing)]
     end)
 
     outward_species = reduce(vcat, map(tracked_names) do species
-        [species for ch in chs if (get_sensor(ch, species) !== nothing)]
+        [species for (ch, ch_sys) in zip(b.channels, chs) if (get_sensor(ch, ch_sys, species) !== nothing)]
     end
     )
 
@@ -124,9 +124,9 @@ function (b::BasicNeuron)(;incoming_connections::Integer=0)
         vcat(tracked[state_indices], somatic_states, syns),
         somatic_params
         ;
-        systems=[ch.sys for ch in chs],
+        systems=chs,
         defaults=merge(state_defaults, parameter_defaults, somatic_state_defaults, somatic_param_defaults),
         name=b.name
     )
-    return ComponentSystem(b, (incoming_connections == 0) ? structural_simplify(sys) : sys)
+    return (incoming_connections == 0) ? structural_simplify(sys) : sys
 end

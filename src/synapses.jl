@@ -2,8 +2,8 @@
 get_pre(::Synapse, sys::ODESystem) = sys.V
 get_post(::Synapse, sys::ODESystem) = sys.V
 
-my_pre(syn_sys::ComponentSystem) = syn_sys.sys.Vpre
-my_post(syn_sys::ComponentSystem) = syn_sys.sys.Vpost
+my_pre(::Synapse, syn_sys::AbstractTimeDependentSystem) = syn_sys.Vpre
+my_post(::Synapse, syn_sys::AbstractTimeDependentSystem) = syn_sys.Vpost
 post_connector(::Synapse) = :Isyn
 
 mutable struct Chol{T<:AbstractFloat} <: Synapse
@@ -61,7 +61,7 @@ function (syn::Synapse)(; name=get_name(syn))
     eqs, states, parameters, current, defaultmap = channel_dynamics(syn, Vpre, Vpost)
     sys = ODESystem(eqs, t, [Vpre, Vpost, states...], [parameters...]; observed=current,
         name=name, defaults=defaultmap)
-    return ComponentSystem(syn, sys)
+    return sys
 end
 
 struct directed_synapse{S<:Synapse,N} <: Synapse

@@ -40,10 +40,6 @@ has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
 abstract type Synapse <: Component end
 struct EmptyConnection <: Synapse end
 
-struct ComponentSystem{C<:Component,S<:AbstractTimeDependentSystem}
-    c::C
-    sys::S
-end
 
 abstract type Geometry end
 
