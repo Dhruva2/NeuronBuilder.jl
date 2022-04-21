@@ -22,11 +22,14 @@ shorthand_name(::Type{Current{T}}) where {T} = Symbol(:I, shorthand_name(T))
 shorthand_name(::Type{Conductance{T}}) where {T} = Symbol(:g, shorthand_name(T))
 shorthand_name(::Type{mRNA{T}}) where {T} = Symbol(:mRNA_, shorthand_name(T))
 
+
 shorthand_name(x::Type{Tuple{T,R}}) where {T,R} = shorthand_name.(x.types)
 
 
 sensed(::FlowChannel{S,A}) where {S,A} = typeflatten(S)
 actuated(::FlowChannel{S,A}) where {S,A} = typeflatten(A)
+sensed(::FlowChannel{Tuple{Nothing},A}) where {A} = Vector{DataType}()
+actuated(::FlowChannel{S,Tuple{Nothing}}) where {S} = Vector{DataType}()
 
 function typeflatten(s::DataType)
     map(fieldtypes(s)) do el
