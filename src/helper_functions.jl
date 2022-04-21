@@ -15,12 +15,14 @@ function get_name(p::PlasticisedChannel)
     )
 end
 
+
 shorthand_name(::Type{Voltage}) = :V
 shorthand_name(::Type{Sodium}) = :Na
 shorthand_name(::Type{Potassium}) = :K
 shorthand_name(::Type{Calcium}) = :Ca
 shorthand_name(::Type{Proton}) = :H
-shorthand_name(::Type{PseudoIon}) = :Leak
+shorthand_name(::Type{MixedIon}) = :mix
+shorthand_name(::Type{Chloride}) = :Cl
 shorthand_name(::Type{Reversal{T}}) where {T} = Symbol(:E, shorthand_name(T))
 shorthand_name(::Type{Current{T}}) where {T} = Symbol(:I, shorthand_name(T))
 shorthand_name(::Type{Conductance{T}}) where {T} = Symbol(:g, shorthand_name(T))
@@ -51,7 +53,7 @@ currents(i::Channel) =
         Current{thing}
     end
 
-sensedvars(i::Channel) =
+sensedvars(i::FlowChannel) =
     map(sensed(i)) do thing
         Symbol(thing |> shorthand_name)
     end
@@ -77,9 +79,7 @@ sensed_ions(i::Channel) = filter(ionic, sensed(i))
 
 
 
-pre_sensed(::Synapse{Spre,Spost,A}) where {Spre,Spost,A} = typeflatten(Spre)
-pre_sensed(::Synapse{Spre,Spost,A}) where {Spre,Spost,A} = typeflatten(Spost)
-actuated(::Synapse{Spre,Spost,A}) where {Spre,Spost,A} = typeflatten(A)
+
 
 
 

@@ -23,7 +23,7 @@ dynamics = Dict(Voltage => BasicVoltageDynamics(),
 somatic_parameters = Dict(
     Reversal{Sodium} => 50.0,
     Reversal{Potassium} => -80.0,
-    Reversal{Leak} => -50.0,
+    Reversal{MixedIon} => -50.0,
     Reversal{Proton} => -20.0,
     Voltage => -60.0,
     Calcium => 0.05,

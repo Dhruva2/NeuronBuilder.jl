@@ -139,7 +139,7 @@ plot(sol, xlims=(5000, 10000), ylims=(-80, 70); vars=[stg.AB₊V, stg.LP₊V, st
 #     for (el, j) in zip(neurons, 1:num_neurons)
 #         for dir_syn in connections
 #             while fill_counter[j] <= num_incoming_connections[i]
-#                 (dir_syn.post_n == el) && (grp = add_connection(grp, dir_syn.pre_n, dir_syn.post_n, dir_syn.syn; i=fill_counter[j])) && (fill_counter[j] += 1)
+#                 (dir_syn.post_n == el) && (grp =  t_n, dir_syn.syn; i=fill_counter[j])) && (fill_counter[j] += 1)
 #             end
 #         end
 #     end

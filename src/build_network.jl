@@ -26,6 +26,7 @@ function add_connection(group, pre::ODESystem, post::ODESystem, syn::Synapse; na
         systems=systems)
 end
 
+
 function in_degree(edge_fn, num_nodes, j)
     sum(1:num_nodes) do i
         length(edge_fn(i, j)) - (typeof(edge_fn(i, j)) == Tuple{EmptyConnection})

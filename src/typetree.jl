@@ -15,9 +15,8 @@ struct Potassium <: Ion end
 struct Calcium <: Ion end
 struct Proton <: Ion end
 struct Chloride <: Ion end
-struct PseudoIon <: Ion end
+struct MixedIon <: Ion end
 
-struct Synaptic <: Species end
 
 abstract type Reversal{I<:Ion} <: SpeciesProperty{I} end
 abstract type Current{I<:Ion} <: SpeciesProperty{I} end
