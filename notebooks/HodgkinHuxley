@@ -142,15 +142,6 @@ begin
 	
 end
 
-# ╔═╡ f9d668ff-1bd9-4b7a-97e3-40c164b9e153
-pot = K()
-
-# ╔═╡ dd6b6747-b29d-4405-bad4-0649fe4d57a3
-instantiate_parameters(pot, conductances)
-
-# ╔═╡ b0244c3b-6ac6-48a3-8cce-df8f7e79dc3d
-pot(EmptyNeuron())
-
 # ╔═╡ 02dd5310-11df-443b-af93-bc02f01d3b43
 begin
 	struct leak{D<:Real} <: FlowChannel(Leak)
@@ -172,9 +163,6 @@ begin
 	end
 end
 
-# ╔═╡ 08ef56c3-4772-4dc3-b866-51c8ef9021e0
-le = leak()
-
 # ╔═╡ 93e4e0de-fa09-4857-9da0-ec5742e55445
 Capacitance = 0.01
 
@@ -188,7 +176,7 @@ somatic_parameters = Dict(
 
 # ╔═╡ 6773ab39-2cf2-485a-80f5-632b7570c6cd
 dynamics = Dict{DataType, SpeciesDynamics}(
-	Voltage => BasicVoltageDynamics()
+	Voltage => BasicVoltageDynamics(),
 )
 
 # ╔═╡ 2db68d74-b25b-4e6b-81cc-3ed1b75c538f
@@ -218,10 +206,12 @@ tracked = zeros(Num, length(tracked_names))
 # ╔═╡ 4aa18797-268d-4721-9e88-8e28d7fd06ec
 param_indices
 
+# ╔═╡ 29bf8a74-ba1f-403f-9047-46eddb195bd6
+tracked[state_indices] .= reduce(vcat,
+        tracked_names[state_indices] .|> shorthand_name |> instantiate_variables)
+
 # ╔═╡ aff5aff9-4c4c-4556-a483-57ad13b02e8b
-    tracked[state_indices] = reduce(vcat,
-        tracked_names[[state_indices]] .|> shorthand_name
-    ) |> instantiate_variables
+tracked
 
 # ╔═╡ bcf7fd68-082e-4278-a6e8-05c48b1e62e1
 reduce(vcat,
@@ -1872,11 +1862,7 @@ version = "0.9.1+5"
 # ╠═3cc2333e-d8a0-442a-af04-6142af327d14
 # ╠═d0879a6b-2d3e-49b7-9341-dd2926a3eb04
 # ╠═91f8349e-a5df-44ec-8de0-812302c8f86c
-# ╠═dd6b6747-b29d-4405-bad4-0649fe4d57a3
-# ╠═f9d668ff-1bd9-4b7a-97e3-40c164b9e153
-# ╠═b0244c3b-6ac6-48a3-8cce-df8f7e79dc3d
 # ╠═02dd5310-11df-443b-af93-bc02f01d3b43
-# ╠═08ef56c3-4772-4dc3-b866-51c8ef9021e0
 # ╠═93e4e0de-fa09-4857-9da0-ec5742e55445
 # ╠═6225e690-68c5-4e44-a6e6-946a14b1ae37
 # ╠═6773ab39-2cf2-485a-80f5-632b7570c6cd
@@ -1888,6 +1874,7 @@ version = "0.9.1+5"
 # ╠═6f388629-8e58-43a8-9875-0c28864f7785
 # ╠═dc8edf11-c7e8-4d27-b0e0-53cc7e455fdc
 # ╠═4aa18797-268d-4721-9e88-8e28d7fd06ec
+# ╠═29bf8a74-ba1f-403f-9047-46eddb195bd6
 # ╠═aff5aff9-4c4c-4556-a483-57ad13b02e8b
 # ╠═bcf7fd68-082e-4278-a6e8-05c48b1e62e1
 # ╠═9576d99a-c12e-4bb0-9bd7-a03846150564

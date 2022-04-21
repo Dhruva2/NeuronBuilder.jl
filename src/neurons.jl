@@ -56,13 +56,13 @@ function (b::BasicNeuron)(; incoming_connections::Integer=0)
     # build state/param ModelingToolkit variables for each of these tracked species 
     tracked = zeros(Num, length(tracked_names))
 
-    tracked[state_indices] = reduce(vcat,
+    tracked[state_indices] .= reduce(vcat,
         tracked_names[state_indices] .|> shorthand_name
-    ) |> instantiate_variables
+        |> instantiate_variables)
 
-    tracked[param_indices] = reduce(vcat,
+    tracked[param_indices] .= reduce(vcat,
         tracked_names[param_indices] .|> shorthand_name
-    ) |> instantiate_parameters
+        |> instantiate_parameters)
 
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:incoming_connections]]
     my_sum(syns) = incoming_connections == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
