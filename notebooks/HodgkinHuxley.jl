@@ -8,10 +8,10 @@ using InteractiveUtils
 using NeuronBuilder
 
 # ╔═╡ 939c6ad2-549e-4964-9610-8b3f0a784ba6
-using Plots
+# using Plots
 
 # ╔═╡ 43ee5aa1-b801-4fa0-a610-aca9a0743712
-using ModelingToolkit, Latexify
+using ModelingToolkit #, Latexify
 
 # ╔═╡ 19ae1717-32a6-447f-aa7b-4544206dbb52
 md"""
@@ -24,86 +24,86 @@ $(@variables V) is a symbolic variable
 """
 
 # ╔═╡ dc5dcd80-fc1e-425a-ac44-7d72d37c713c
-αₙ(x) = 0.01(10. -x) / exp(
-	(10. - x)/10.
+αₙ(x) = 0.01(10.0 - x) / exp(
+    (10.0 - x) / 10.0
 )
 
 # ╔═╡ 81f66874-5e5b-46ab-be81-1125d7d39094
 αₙ(V)
 
 # ╔═╡ 24474241-930d-400b-b051-0e6b0c5e5239
-βₙ(x) = 0.125exp(-x / 80. )
+βₙ(x) = 0.125exp(-x / 80.0)
 
 # ╔═╡ b18e04bd-8ac5-4ad9-9367-a3bf0b882266
 βₙ(V)
 
 # ╔═╡ 841a0580-7908-4de6-b287-642e5953c071
-αₘ(x) = 0.1(25. - x) / ( 
-	exp( 
-		25. - x / 10. 
-	) - 1.
+αₘ(x) = 0.1(25.0 - x) / (
+    exp(
+        25.0 - x / 10.0
+    ) - 1.0
 );
 
 # ╔═╡ c252fef7-dfb7-4b0b-a8a4-5950bd50a534
 αₘ(V)
 
 # ╔═╡ 4ddb805a-5b8d-4845-9425-33bbe26a33b2
-βₘ(x) = 4exp( 
--x / 18.
+βₘ(x) = 4exp(
+    -x / 18.0
 );
 
 # ╔═╡ eb93f734-900f-4114-843e-f87d6c21328c
 βₘ(V)
 
 # ╔═╡ a823c314-a14b-4af7-950b-cc7d94c38ee6
-αₕ(x) = 0.07exp(-x/20.);
+αₕ(x) = 0.07exp(-x / 20.0);
 
 # ╔═╡ a9ea693a-5062-4501-9b1e-b295d1ebda9d
 αₕ(V)
 
 # ╔═╡ 6d981c88-ab25-4d6a-b4b8-18f4e65961c4
-βₕ(x) = 1. / (
-1 + exp(
-	(30. - x) / 10.
-)
+βₕ(x) = 1.0 / (
+    1 + exp(
+        (30.0 - x) / 10.0
+    )
 );
 
 # ╔═╡ 567f1edd-8474-4418-b985-56c9871b8347
 βₕ(V)
 
 # ╔═╡ 8f43b2f3-2a01-40e5-94ed-3a38548906a3
-τₙ(x) = 1. / (αₙ(x) + βₙ(x));
+τₙ(x) = 1.0 / (αₙ(x) + βₙ(x));
 
 # ╔═╡ faea1138-1ab9-4017-87dd-95650eba4ac6
 τₙ(V)
 
 # ╔═╡ 9f5e4767-582b-4d92-b113-a85a2f87d4be
 begin
-	struct Na{F,D<:Real} <: FlowChannel(Sodium)
-	    g::D
-	    m::F
-	    h::F
-	end
+    struct Na{F,D<:Real} <: FlowChannel(Sodium)
+        g::D
+        m::F
+        h::F
+    end
 
-	Na() = Na(1.2, 0., 0.)
-	
-	function (ch::Na)(n::Neuron; name=get_name(ch))
-	
-	    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
-	    g, = instantiate_parameters(ch, conductances)
-	    @variables m(t) h(t)
-	
-	    states, params = vardivide(V, m, h, I, g, E)
-	    eqs = [
-			D(m) ~ αₘ(V)*(1 - m) - βₘ(V)*m,
-	        D(h) ~ αₕ(V)*(1 -h) - βₘ(V)*h,
-	        I ~ g * m^3 * h * (E - V)
-		]
-	
-	defaultmap = [m => ch.m, h => ch.h, g => ch.g]
-	    return ODESystem(eqs, t, states, params; defaults=defaultmap, name=name)
-	end
-	
+    Na() = Na(1.2, 0.0, 0.0)
+
+    function (ch::Na)(n::Neuron; name=get_name(ch))
+
+        I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+        g, = instantiate_parameters(ch, conductances)
+        @variables m(t) h(t)
+
+        states, params = vardivide(V, m, h, I, g, E)
+        eqs = [
+            D(m) ~ αₘ(V) * (1 - m) - βₘ(V) * m,
+            D(h) ~ αₕ(V) * (1 - h) - βₘ(V) * h,
+            I ~ g * m^3 * h * (E - V)
+        ]
+
+        defaultmap = [m => ch.m, h => ch.h, g => ch.g]
+        return ODESystem(eqs, t, states, params; defaults=defaultmap, name=name)
+    end
+
 end
 
 # ╔═╡ da989510-3fe7-450f-98fa-c41e9f41af47
@@ -117,50 +117,50 @@ actuated(na)
 
 # ╔═╡ 91f8349e-a5df-44ec-8de0-812302c8f86c
 begin
-	struct K{F,D<:Real} <: FlowChannel(Potassium)
-	    g::D
-	    n::F
-	end
+    struct K{F,D<:Real} <: FlowChannel(Potassium)
+        g::D
+        n::F
+    end
 
-	K() = K(0.36, 0.)
-	
-	function (ch::K)(neur::Neuron; name=get_name(ch))
-	
-	    I, E, V = instantiate_hooks(neur, ch, currents, reversals, voltage)
-	    g, = instantiate_parameters(ch, conductances)
-	    @variables n(t)
-	
-	    states, params = vardivide(V, n, I, g, E)
-	    eqs = [
-			D(n) ~ αₙ(V)*(1 - n) - βₙ(V)*n,
-	        I ~ g * n^4 * (E - V)
-		]
-	
-	defaultmap = [n => ch.n, g => ch.g]
-	    return ODESystem(eqs, t, states, params; defaults=defaultmap, name=name)
-	end
-	
+    K() = K(0.36, 0.0)
+
+    function (ch::K)(neur::Neuron; name=get_name(ch))
+
+        I, E, V = instantiate_hooks(neur, ch, currents, reversals, voltage)
+        g, = instantiate_parameters(ch, conductances)
+        @variables n(t)
+
+        states, params = vardivide(V, n, I, g, E)
+        eqs = [
+            D(n) ~ αₙ(V) * (1 - n) - βₙ(V) * n,
+            I ~ g * n^4 * (E - V)
+        ]
+
+        defaultmap = [n => ch.n, g => ch.g]
+        return ODESystem(eqs, t, states, params; defaults=defaultmap, name=name)
+    end
+
 end
 
 # ╔═╡ 02dd5310-11df-443b-af93-bc02f01d3b43
 begin
-	struct leak{D<:Real} <: FlowChannel(Leak)
-	    g::D
-	end
+    struct leak{D<:Real} <: FlowChannel(Leak)
+        g::D
+    end
 
-	leak() = leak(0.003)
-	
-	function (ch::leak)(n::Neuron; name=get_name(ch))
-	    I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
-	    g, = instantiate_parameters(ch, conductances)
-	
-	    eqs = [I ~ g * (E - V)]
-	
-	    states, params = vardivide(V, E, I, g)
-	    defaultmap = [g => ch.g]
-	
-	    return ODESystem(eqs, t, states, params; defaults=defaultmap, name=name)
-	end
+    leak() = leak(0.003)
+
+    function (ch::leak)(n::Neuron; name=get_name(ch))
+        I, E, V = instantiate_hooks(n, ch, currents, reversals, voltage)
+        g, = instantiate_parameters(ch, conductances)
+
+        eqs = [I ~ g * (E - V)]
+
+        states, params = vardivide(V, E, I, g)
+        defaultmap = [g => ch.g]
+
+        return ODESystem(eqs, t, states, params; defaults=defaultmap, name=name)
+    end
 end
 
 # ╔═╡ 93e4e0de-fa09-4857-9da0-ec5742e55445
@@ -168,15 +168,15 @@ Capacitance = 0.01
 
 # ╔═╡ 6225e690-68c5-4e44-a6e6-946a14b1ae37
 somatic_parameters = Dict(
-	Voltage => -60.,
-	Reversal{Sodium} => 55.17,
-	Reversal{Potassium} => -72.14,
-	Reversal{Leak} => -49.42
+    Voltage => -60.0,
+    Reversal{Sodium} => 55.17,
+    Reversal{Potassium} => -72.14,
+    Reversal{Leak} => -49.42
 )
 
 # ╔═╡ 6773ab39-2cf2-485a-80f5-632b7570c6cd
-dynamics = Dict{DataType, SpeciesDynamics}(
-	Voltage => BasicVoltageDynamics(),
+dynamics = Dict{DataType,SpeciesDynamics}(
+    Voltage => BasicVoltageDynamics(),
 )
 
 # ╔═╡ 2db68d74-b25b-4e6b-81cc-3ed1b75c538f
@@ -189,15 +189,15 @@ HH = BasicNeuron(NoGeometry(Capacitance), dynamics, somatic_parameters, channels
 tracked_names = vcat(Voltage, channels .|> sensed |> Iterators.flatten |> unique)
 
 # ╔═╡ fe587b23-471f-4c21-a386-7410655a2be1
-has_dynamics(species) = haskey(HH.dynamics, species)
+# has_dynamics(species) = haskey(HH.dynamics, species)
 
 # ╔═╡ 43037712-738f-4d56-b55c-ae5101af5a71
 HH()
 
 # ╔═╡ 6f388629-8e58-43a8-9875-0c28864f7785
 begin
-	    state_indices = findall(has_dynamics, tracked_names)
-	    param_indices = findall(!has_dynamics, tracked_names)
+    state_indices = [1]
+    param_indices = [2, 3, 4]
 end
 
 # ╔═╡ dc8edf11-c7e8-4d27-b0e0-53cc7e455fdc
@@ -208,14 +208,14 @@ param_indices
 
 # ╔═╡ 29bf8a74-ba1f-403f-9047-46eddb195bd6
 tracked[state_indices] .= reduce(vcat,
-        tracked_names[state_indices] .|> shorthand_name |> instantiate_variables)
+    tracked_names[state_indices] .|> shorthand_name |> instantiate_variables)
 
 # ╔═╡ aff5aff9-4c4c-4556-a483-57ad13b02e8b
 tracked
 
 # ╔═╡ bcf7fd68-082e-4278-a6e8-05c48b1e62e1
 reduce(vcat,
-        tracked_names[state_indices] .|> shorthand_name
+    tracked_names[state_indices] .|> shorthand_name
 ) |> instantiate_variables
 
 # ╔═╡ 9576d99a-c12e-4bb0-9bd7-a03846150564

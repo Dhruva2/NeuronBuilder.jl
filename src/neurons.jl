@@ -46,7 +46,6 @@ function (b::BasicNeuron)(; incoming_connections::Integer=0)
     #shared -> hooks
     # e.g. species = Voltage or species = Potassium
     has_dynamics(species) = haskey(b.dynamics, species)
-
     # track union of things sensed by the connected channels
     tracked_names = vcat(Voltage, b.channels .|> sensed |> Iterators.flatten |> unique)
 
@@ -65,7 +64,7 @@ function (b::BasicNeuron)(; incoming_connections::Integer=0)
         |> instantiate_parameters)
 
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:incoming_connections]]
-    my_sum(syns) = incoming_connections == 0 ? sum(Num.(syns)) : sum(reduce(vcat, syns))
+    my_sum(syns) = incoming_connections == 0 ? 0.0 : sum(reduce(vcat, syns))
     !(incoming_connections == 0) && (syns = reduce(vcat, syns))
     chs = [ch(b) for ch in b.channels]
 
