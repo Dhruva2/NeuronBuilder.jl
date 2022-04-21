@@ -191,23 +191,45 @@ dynamics = Dict{DataType, SpeciesDynamics}(
 	Voltage => BasicVoltageDynamics()
 )
 
-# ╔═╡ fa29698b-36a4-43e1-bf29-4f9c8a40aafe
-
-
 # ╔═╡ 2db68d74-b25b-4e6b-81cc-3ed1b75c538f
-channels = [K(), Na(), Leak()]
-
-# ╔═╡ fb56d9ac-c0f4-4ce4-92c5-7f70496739fa
-aa =[el for el in channels] |> typeof
-
-# ╔═╡ 82dae1b5-86d5-4de1-8618-75ef682a6e61
-leak() |> typeof |> supertype
+channels = [K(), Na(), leak()]
 
 # ╔═╡ 4eadd12d-fa37-418a-856a-462479b59d2f
 HH = BasicNeuron(NoGeometry(Capacitance), dynamics, somatic_parameters, channels, :HH)
 
 # ╔═╡ d4938d01-98e9-4172-9ec7-ed2a57f305bf
-NoGeometry(Capacitance)
+tracked_names = vcat(Voltage, channels .|> sensed |> Iterators.flatten |> unique)
+
+# ╔═╡ fe587b23-471f-4c21-a386-7410655a2be1
+has_dynamics(species) = haskey(HH.dynamics, species)
+
+# ╔═╡ 43037712-738f-4d56-b55c-ae5101af5a71
+HH()
+
+# ╔═╡ 6f388629-8e58-43a8-9875-0c28864f7785
+begin
+	    state_indices = findall(has_dynamics, tracked_names)
+	    param_indices = findall(!has_dynamics, tracked_names)
+end
+
+# ╔═╡ dc8edf11-c7e8-4d27-b0e0-53cc7e455fdc
+tracked = zeros(Num, length(tracked_names))
+
+# ╔═╡ 4aa18797-268d-4721-9e88-8e28d7fd06ec
+param_indices
+
+# ╔═╡ aff5aff9-4c4c-4556-a483-57ad13b02e8b
+    tracked[state_indices] = reduce(vcat,
+        tracked_names[[state_indices]] .|> shorthand_name
+    ) |> instantiate_variables
+
+# ╔═╡ bcf7fd68-082e-4278-a6e8-05c48b1e62e1
+reduce(vcat,
+        tracked_names[state_indices] .|> shorthand_name
+) |> instantiate_variables
+
+# ╔═╡ 9576d99a-c12e-4bb0-9bd7-a03846150564
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1858,11 +1880,16 @@ version = "0.9.1+5"
 # ╠═93e4e0de-fa09-4857-9da0-ec5742e55445
 # ╠═6225e690-68c5-4e44-a6e6-946a14b1ae37
 # ╠═6773ab39-2cf2-485a-80f5-632b7570c6cd
-# ╠═fa29698b-36a4-43e1-bf29-4f9c8a40aafe
 # ╠═2db68d74-b25b-4e6b-81cc-3ed1b75c538f
-# ╠═fb56d9ac-c0f4-4ce4-92c5-7f70496739fa
-# ╠═82dae1b5-86d5-4de1-8618-75ef682a6e61
 # ╠═4eadd12d-fa37-418a-856a-462479b59d2f
 # ╠═d4938d01-98e9-4172-9ec7-ed2a57f305bf
+# ╠═fe587b23-471f-4c21-a386-7410655a2be1
+# ╠═43037712-738f-4d56-b55c-ae5101af5a71
+# ╠═6f388629-8e58-43a8-9875-0c28864f7785
+# ╠═dc8edf11-c7e8-4d27-b0e0-53cc7e455fdc
+# ╠═4aa18797-268d-4721-9e88-8e28d7fd06ec
+# ╠═aff5aff9-4c4c-4556-a483-57ad13b02e8b
+# ╠═bcf7fd68-082e-4278-a6e8-05c48b1e62e1
+# ╠═9576d99a-c12e-4bb0-9bd7-a03846150564
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

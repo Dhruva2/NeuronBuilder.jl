@@ -99,11 +99,14 @@ instantiate_variables(v::Vector{Symbol}) =
         @variables $f(t)
     end |> Iterators.flatten |> collect
 
+instantiate_variables(s::Symbol) = @variables $s(t)
 
 instantiate_parameters(v::Vector{Symbol}) =
     map(v) do f
         @variables $f
     end |> Iterators.flatten |> collect
+
+instantiate_parameters(s::Symbol) = @parameters $f
 
 
 get_actuator(c::FlowChannel, sys::ODESystem, v::Type{Voltage}) =
