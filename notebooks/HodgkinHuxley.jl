@@ -1,13 +1,11 @@
 ### A Pluto.jl notebook ###
-# v0.18.4
+# v0.19.2
 
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ f56ade1a-c156-11ec-0b95-453ac6cc4736
-# using NeuronBuilder
-
 # ╔═╡ 939c6ad2-549e-4964-9610-8b3f0a784ba6
+# ╠═╡ show_logs = false
 using Plots
 
 # ╔═╡ 43ee5aa1-b801-4fa0-a610-aca9a0743712
@@ -15,6 +13,9 @@ using ModelingToolkit #, Latexify
 
 # ╔═╡ 028bfc47-da2a-4f0a-a27d-9ffa14c1a896
 using OrdinaryDiffEq
+
+# ╔═╡ f56ade1a-c156-11ec-0b95-453ac6cc4736
+# using NeuronBuilder
 
 # ╔═╡ 19ae1717-32a6-447f-aa7b-4544206dbb52
 md"""
@@ -361,13 +362,11 @@ reversals(na)
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
-NeuronBuilder = "bdec0aff-bc35-4528-862d-7dacab2b11a0"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [compat]
 ModelingToolkit = "~8.7.1"
-NeuronBuilder = "~0.2.2"
 OrdinaryDiffEq = "~6.10.0"
 Plots = "~1.27.6"
 """
@@ -376,7 +375,7 @@ Plots = "~1.27.6"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.0"
+julia_version = "1.7.2"
 manifest_format = "2.0"
 
 [[deps.AbstractAlgebra]]
@@ -1232,12 +1231,6 @@ version = "0.3.7"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
-
-[[deps.NeuronBuilder]]
-deps = ["ModelingToolkit"]
-git-tree-sha1 = "af62ed7285bd2900272fc988671c1e617fc25620"
-uuid = "bdec0aff-bc35-4528-862d-7dacab2b11a0"
-version = "0.2.2"
 
 [[deps.NonlinearSolve]]
 deps = ["ArrayInterface", "FiniteDiff", "ForwardDiff", "IterativeSolvers", "LinearAlgebra", "RecursiveArrayTools", "RecursiveFactorization", "Reexport", "SciMLBase", "Setfield", "StaticArrays", "UnPack"]
