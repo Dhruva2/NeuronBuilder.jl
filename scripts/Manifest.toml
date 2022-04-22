@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.0"
+julia_version = "1.7.2"
 manifest_format = "2.0"
 
 [[deps.AbstractAlgebra]]
@@ -885,8 +885,8 @@ version = "0.3.7"
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 
 [[deps.NeuronBuilder]]
-deps = ["ModelingToolkit"]
-path = ".."
+deps = ["ModelingToolkit", "Revise"]
+path = "/Users/tsjb2/.julia/dev/NeuronBuilder"
 uuid = "bdec0aff-bc35-4528-862d-7dacab2b11a0"
 version = "0.1.3"
 
