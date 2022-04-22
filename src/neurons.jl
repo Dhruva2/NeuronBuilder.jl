@@ -47,7 +47,11 @@ function (b::BasicNeuron)(; incoming_connections::Integer=0)
     # e.g. species = Voltage or species = Potassium
     has_dynamics(species) = haskey(b.dynamics, species)
     # track union of things sensed by the connected channels
-    tracked_names = vcat(Voltage, b.channels .|> sensed |> Iterators.flatten |> unique)
+    tracked_names = vcat(
+        Voltage, 
+        b.channels .|> sensed |> Iterators.flatten |> unique,
+        [keys(b.dynamics)...]
+    ) |> unique!
 
     state_indices = findall(has_dynamics, tracked_names)
     param_indices = findall(!has_dynamics, tracked_names)
@@ -79,7 +83,7 @@ function (b::BasicNeuron)(; incoming_connections::Integer=0)
 
     # hook connections between channel sensors and tracked variables. 
     outward_connections = reduce(vcat, map(tracked_names, tracked) do species, variable
-        [variable ~ get_sensor(ch, ch_sys, species) for (ch, ch_sys) in zip(b.channels, chs) if (get_sensor(ch, ch_sys, species) !== nothing)]
+        [(variable ~ get_sensor(ch, ch_sys, species))::Equation for (ch, ch_sys) in zip(b.channels, chs) if (get_sensor(ch, ch_sys, species) !== nothing)]::Vector{Equation}
     end)
 
     outward_species = reduce(vcat, map(tracked_names) do species
@@ -129,3 +133,5 @@ function (b::BasicNeuron)(; incoming_connections::Integer=0)
     )
     return (incoming_connections == 0) ? structural_simplify(sys) : sys
 end
+
+export get_from, get_states, default_states, default_params, get_parameters

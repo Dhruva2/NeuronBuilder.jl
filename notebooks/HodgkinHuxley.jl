@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ f56ade1a-c156-11ec-0b95-453ac6cc4736
-using NeuronBuilder
+# using NeuronBuilder
 
 # ╔═╡ 939c6ad2-549e-4964-9610-8b3f0a784ba6
 using Plots
@@ -16,17 +16,10 @@ using ModelingToolkit #, Latexify
 # ╔═╡ 028bfc47-da2a-4f0a-a27d-9ffa14c1a896
 using OrdinaryDiffEq
 
-# ╔═╡ 6d096816-1bd0-4b66-8fd2-effd046cd716
-using Unitful
-
 # ╔═╡ 19ae1717-32a6-447f-aa7b-4544206dbb52
 md"""
 #### 1. Tracing numerical code to get symbolic code
 """
-
-# ╔═╡ eb5eb9ab-e261-4c72-881a-51bce32b9ecc
-
-
 
 # ╔═╡ dc5dcd80-fc1e-425a-ac44-7d72d37c713c
 αₙ(x) = 0.01(x + 50.0) / (1 - exp(
@@ -86,8 +79,19 @@ md"""
 # ╔═╡ faea1138-1ab9-4017-87dd-95650eba4ac6
 τₙ(V)
 
+# ╔═╡ 1ed201a4-773b-4c5d-ad19-e5a6ebab27e2
+md"""
+
+## Building a channel 
+
+### An example sodium channel (hodgkin huxley)
+"""
+
 # ╔═╡ 9f5e4767-582b-4d92-b113-a85a2f87d4be
 begin
+	"""
+		this holds default values you may want:
+	"""
     struct Na{F,D<:Real} <: FlowChannel(Sodium)
         g::D
         m::F
@@ -115,14 +119,34 @@ begin
 
 end
 
-# ╔═╡ da989510-3fe7-450f-98fa-c41e9f41af47
-na = Na(3.0)
+# ╔═╡ c6e25a10-3f95-4b01-b523-060e1c626587
+na = Na(3.)
 
-# ╔═╡ 3cc2333e-d8a0-442a-af04-6142af327d14
+# ╔═╡ d8358ea0-8452-4658-a25a-72da16ca6560
+na(EmptyNeuron())
+
+# ╔═╡ 5c67938e-1e2b-4783-a938-3e9e70e1903d
+na |> typeof |> supertype
+
+# ╔═╡ 11d33cea-5345-4e00-be11-c49595c417bf
 sensed(na)
 
-# ╔═╡ d0879a6b-2d3e-49b7-9341-dd2926a3eb04
+# ╔═╡ 6559cd4d-15b1-4b8f-980d-326a3111ce49
 actuated(na)
+
+# ╔═╡ a26230d8-6a33-440b-bb56-2a475bb660e4
+md"""
+#### Points
+
+- rigid way to define and instantiate sensors and actuators 
+- freedom to define any internal equations / states
+- complicated channel can have multiple sensors / actuators
+"""
+
+# ╔═╡ 76e4277c-ff8f-4def-bbfb-dd918f524921
+md"""
+### Potassium channel 
+"""
 
 # ╔═╡ 91f8349e-a5df-44ec-8de0-812302c8f86c
 begin
@@ -154,13 +178,21 @@ end
 # ╔═╡ e9fd95b0-0baf-4a51-bd12-a2921b903b93
 K(1)(EmptyNeuron())
 
+# ╔═╡ 8f559189-b2d9-44c8-b2d0-2100c5e49888
+md"""
+### Input channel
+
+- needs custom sensors and actuators
+- easy extension to voltage clamp
+"""
+
 # ╔═╡ 65dbba1f-4c5f-4f1f-8244-38a83cead934
 begin
-    struct Inp2{F} <: FlowChannel{Tuple{Nothing},Tuple{Leak}}
+    struct Inp{F} <: FlowChannel{Tuple{Nothing},Tuple{Leak}}
         f::F
     end
 
-    function (ch::Inp2)(neur::Neuron; name=get_name(ch))
+    function (ch::Inp)(neur::Neuron; name=get_name(ch))
         I, V = instantiate_hooks(neur, ch, currents, voltage)
 
         eqs = [I ~ ch.f(t)]
@@ -170,7 +202,10 @@ begin
 end
 
 # ╔═╡ e412d90b-4a99-4684-899f-e64adf0a9775
-ii = Inp2(x -> Num(3.0))
+ii = Inp(t -> 10(1 + sin(t)))
+
+# ╔═╡ aad21a47-41c4-49b8-bad9-385d215fc208
+# eqs = [I ~ ii.f(t)]
 
 # ╔═╡ 61442dee-dabc-4b78-907f-676353a853fa
 ii(EmptyNeuron())
@@ -196,8 +231,15 @@ begin
     end
 end
 
+# ╔═╡ 672e0024-53f0-46a5-9ae8-9f602cd9c071
+md"""### Defining a neuron
+"""
+
 # ╔═╡ 93e4e0de-fa09-4857-9da0-ec5742e55445
 Capacitance = 0.01
+
+# ╔═╡ cd350bbc-8660-42e7-a9fe-5012b626ca67
+geom = NoGeometry(Capacitance)
 
 # ╔═╡ 6225e690-68c5-4e44-a6e6-946a14b1ae37
 somatic_parameters = Dict(
@@ -212,47 +254,108 @@ dynamics = Dict{DataType,SpeciesDynamics}(
     Voltage => BasicVoltageDynamics(),
 )
 
-# ╔═╡ 26b49369-fa5a-4bca-9fee-ad2449e38305
-mult = 1000.0
-
 # ╔═╡ 2db68d74-b25b-4e6b-81cc-3ed1b75c538f
-channels = [K(mult * 0.36), Na(mult * 1.2), leak(mult * 0.0003), Inp2(x -> 100.0)]
+channels = [K(0.36), Na(1.2), leak(0.0003), ii]
 
 # ╔═╡ 4eadd12d-fa37-418a-856a-462479b59d2f
-HH = BasicNeuron(NoGeometry(Capacitance), dynamics, somatic_parameters, channels, :HH)
-
-# ╔═╡ 450eef3b-2741-4db0-a62f-1075d8cfe5b9
-I = instantiate_hooks(HH, ii, currents)
-
-# ╔═╡ aad21a47-41c4-49b8-bad9-385d215fc208
-eqs = [I ~ ii.f(t)]
+HH = BasicNeuron(geom, dynamics, somatic_parameters, channels, :HH)
 
 # ╔═╡ ef78f53b-78b2-4c46-9eeb-99dfa9b1a429
 ODESys = HH()
-
-# ╔═╡ d4938d01-98e9-4172-9ec7-ed2a57f305bf
-tracked_names = vcat(Voltage, channels .|> sensed |> Iterators.flatten |> unique)
 
 # ╔═╡ f5d8b94f-03dd-4ecb-8fd8-a545d70acce5
 prob = ODEProblem(ODESys, [], (0.0, 100.0), []);
 
 # ╔═╡ 25b4cc97-1947-458a-bf8f-8bf2a7b8a814
-sol = solve(prob, Tsit5());
-
-# ╔═╡ c3e6bf35-aade-4098-a1a4-3ba263971892
-plot(sol, vars=[ODESys.:K₊IK, ODESys.:Na₊INa, ODESys.V])
+sol = solve(prob,Tsit5());
 
 # ╔═╡ c7ba103a-343d-4a8a-8f0d-5277516a62cc
-plot(sol)
+plot(sol; linewidth=4, vars= [ODESys.V])
+
+# ╔═╡ 66da45d9-eeb6-46e4-a477-e3d9adc02624
+plot(sol, vars=[ODESys.:K₊IK, ODESys.:Na₊INa]; linewidth=4)
 
 # ╔═╡ a2a7e310-9e23-452b-9131-ad63c5edaf26
 HH()
 
-# ╔═╡ 0e621ad9-8395-4a19-8687-6cee51ec42af
-aa = 1u"mS/cm^2"
+# ╔═╡ aad1bf93-6b46-42f4-93c9-5eb5aa04d2e5
+md"""### Adding sodium dynamics"""
 
-# ╔═╡ 8600f53b-be4e-4c66-81fd-0830b8b59f02
-1000aa * 1u"A"
+# ╔═╡ 78a90a0d-cdc0-483e-b21e-1870a31f9648
+begin
+	struct MySodiumDynamics <: SpeciesDynamics{Sodium} end
+	
+	function (b::MySodiumDynamics)(n::Neuron, vars, varnames, flux)
+	    Na = vars[findfirst(x -> x == Sodium, varnames)]
+	    return D(Na) ~  flux - Na 
+	end
+end
+
+# ╔═╡ b2c5dc1e-1854-4bfd-a5c1-3433349e0928
+extended_dynamics = merge(dynamics, Dict(
+	Sodium => MySodiumDynamics()
+)
+)
+
+extended_parameters = merge(somatic_parameters, Dict(Sodium => 0.))
+
+# ╔═╡ a16841ee-b9b1-4390-b568-c85adb2ce2c3
+typeof(extended_dynamics)
+
+# ╔═╡ f4112e87-9a41-4b7e-ae81-fe2f8547da23
+SodiumHH = BasicNeuron(geom, extended_dynamics, extended_parameters, channels, :HH)
+
+# ╔═╡ b8fa49cf-cb20-48ea-86a4-37e3eceecf93
+SodiumHH()
+
+# ╔═╡ 7c4f5a51-8555-42ce-9c50-9e58e2f4e293
+newsys = SodiumHH()
+
+# ╔═╡ 624569e8-ec14-4614-95b4-36e49af24adc
+b = SodiumHH
+
+# ╔═╡ d1097d6a-ef7d-4817-8754-503d36db7c84
+begin
+	has_dynamics(species) = haskey(b.dynamics, species)
+	tracked_names = vcat(Voltage, b.channels .|> sensed |> Iterators.flatten |> unique)
+	
+	    state_indices = findall(has_dynamics, tracked_names)
+	    param_indices = findall(!has_dynamics, tracked_names)
+	
+	    # build state/param ModelingToolkit variables for each of these tracked species 
+	    tracked = zeros(Num, length(tracked_names))
+	
+	    tracked[state_indices] .= reduce(vcat,
+	        tracked_names[state_indices] .|> shorthand_name
+	        |> instantiate_variables)
+
+	    tracked[param_indices] .= reduce(vcat,
+        tracked_names[param_indices] .|> shorthand_name
+        |> instantiate_parameters)
+
+	chs = [ch(b) for ch in b.channels];
+end
+
+# ╔═╡ adcff601-1a16-4e53-8437-38f91547a7bb
+   tracked_fluxes = map(tracked_names[state_indices]) do thing
+        sum(zip(b.channels, chs)) do (channel, channel_sys)
+            get_actuator(channel, channel_sys, thing)
+        end
+   end
+
+# ╔═╡ ff001d70-b531-4c49-96a8-756a783b7842
+  outward_connections = reduce(vcat, map(tracked_names, tracked) do species, variable
+        [variable ~ get_sensor(ch, ch_sys, species) for (ch, ch_sys) in zip(b.channels, chs) if (get_sensor(ch, ch_sys, species) !== nothing)]
+    end)
+
+# ╔═╡ 8a0909fc-fbde-4b3c-8f49-fe5ff1bf20da
+tracked_names
+
+# ╔═╡ dc2c8209-e37c-405b-82fd-3ba49da7ac93
+reversals(na)
+
+# ╔═╡ e78d4497-acb2-4fed-bbdf-3393c0eeb86b
+# has_dynamics(SodiumHH, reversals(na))
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -261,14 +364,12 @@ ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
 NeuronBuilder = "bdec0aff-bc35-4528-862d-7dacab2b11a0"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
-ModelingToolkit = "~8.7.0"
-NeuronBuilder = "~0.2.1"
+ModelingToolkit = "~8.7.1"
+NeuronBuilder = "~0.2.2"
 OrdinaryDiffEq = "~6.10.0"
 Plots = "~1.27.6"
-Unitful = "~1.11.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1088,9 +1189,9 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[deps.ModelingToolkit]]
 deps = ["AbstractTrees", "ArrayInterface", "ConstructionBase", "DataStructures", "DiffEqBase", "DiffEqCallbacks", "DiffEqJump", "DiffRules", "Distributed", "Distributions", "DocStringExtensions", "DomainSets", "Graphs", "IfElse", "InteractiveUtils", "JuliaFormatter", "LabelledArrays", "Latexify", "Libdl", "LinearAlgebra", "MacroTools", "NaNMath", "NonlinearSolve", "RecursiveArrayTools", "Reexport", "Requires", "RuntimeGeneratedFunctions", "SciMLBase", "Serialization", "Setfield", "SparseArrays", "SpecialFunctions", "StaticArrays", "SymbolicUtils", "Symbolics", "UnPack", "Unitful"]
-git-tree-sha1 = "9a518f09085d33f563cfd9337ad1d1d3244c8778"
+git-tree-sha1 = "969126f23df19a44e6f5f26ac8c67763d40b8e74"
 uuid = "961ee093-0014-501f-94e3-6117800e7a78"
-version = "8.7.0"
+version = "8.7.1"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
@@ -1134,9 +1235,9 @@ uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 
 [[deps.NeuronBuilder]]
 deps = ["ModelingToolkit"]
-git-tree-sha1 = "ce77cb8a552804d7c1f454c4fa1f0c189f0ee0eb"
+git-tree-sha1 = "af62ed7285bd2900272fc988671c1e617fc25620"
 uuid = "bdec0aff-bc35-4528-862d-7dacab2b11a0"
-version = "0.2.1"
+version = "0.2.2"
 
 [[deps.NonlinearSolve]]
 deps = ["ArrayInterface", "FiniteDiff", "ForwardDiff", "IterativeSolvers", "LinearAlgebra", "RecursiveArrayTools", "RecursiveFactorization", "Reexport", "SciMLBase", "Setfield", "StaticArrays", "UnPack"]
@@ -1213,9 +1314,9 @@ version = "0.12.3"
 
 [[deps.Parsers]]
 deps = ["Dates"]
-git-tree-sha1 = "621f4f3b4977325b9128d5fae7a8b4829a0c2222"
+git-tree-sha1 = "3b429f37de37f1fc603cc1de4a799dc7fbe4c0b6"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "2.2.4"
+version = "2.3.0"
 
 [[deps.Pixman_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1287,9 +1388,9 @@ uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [[deps.Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
-git-tree-sha1 = "ad368663a5e20dbb8d6dc2fddeefe4dae0781ae8"
+git-tree-sha1 = "c6c0f690d0cc7caddb74cef7aa847b824a16b256"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
-version = "5.15.3+0"
+version = "5.15.3+1"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -1878,7 +1979,6 @@ version = "0.9.1+5"
 # ╠═43ee5aa1-b801-4fa0-a610-aca9a0743712
 # ╠═028bfc47-da2a-4f0a-a27d-9ffa14c1a896
 # ╟─19ae1717-32a6-447f-aa7b-4544206dbb52
-# ╠═eb5eb9ab-e261-4c72-881a-51bce32b9ecc
 # ╠═dc5dcd80-fc1e-425a-ac44-7d72d37c713c
 # ╠═71c88978-cf46-4098-b773-a41765f372ff
 # ╠═81f66874-5e5b-46ab-be81-1125d7d39094
@@ -1894,33 +1994,49 @@ version = "0.9.1+5"
 # ╠═567f1edd-8474-4418-b985-56c9871b8347
 # ╠═8f43b2f3-2a01-40e5-94ed-3a38548906a3
 # ╠═faea1138-1ab9-4017-87dd-95650eba4ac6
+# ╟─1ed201a4-773b-4c5d-ad19-e5a6ebab27e2
+# ╠═c6e25a10-3f95-4b01-b523-060e1c626587
+# ╠═d8358ea0-8452-4658-a25a-72da16ca6560
+# ╠═5c67938e-1e2b-4783-a938-3e9e70e1903d
+# ╠═11d33cea-5345-4e00-be11-c49595c417bf
+# ╠═6559cd4d-15b1-4b8f-980d-326a3111ce49
 # ╠═9f5e4767-582b-4d92-b113-a85a2f87d4be
-# ╠═da989510-3fe7-450f-98fa-c41e9f41af47
-# ╠═3cc2333e-d8a0-442a-af04-6142af327d14
-# ╠═d0879a6b-2d3e-49b7-9341-dd2926a3eb04
+# ╟─a26230d8-6a33-440b-bb56-2a475bb660e4
+# ╟─76e4277c-ff8f-4def-bbfb-dd918f524921
 # ╠═91f8349e-a5df-44ec-8de0-812302c8f86c
 # ╠═e9fd95b0-0baf-4a51-bd12-a2921b903b93
+# ╟─8f559189-b2d9-44c8-b2d0-2100c5e49888
 # ╠═65dbba1f-4c5f-4f1f-8244-38a83cead934
 # ╠═e412d90b-4a99-4684-899f-e64adf0a9775
-# ╠═450eef3b-2741-4db0-a62f-1075d8cfe5b9
 # ╠═aad21a47-41c4-49b8-bad9-385d215fc208
 # ╠═61442dee-dabc-4b78-907f-676353a853fa
 # ╠═02dd5310-11df-443b-af93-bc02f01d3b43
+# ╟─672e0024-53f0-46a5-9ae8-9f602cd9c071
 # ╠═93e4e0de-fa09-4857-9da0-ec5742e55445
+# ╠═cd350bbc-8660-42e7-a9fe-5012b626ca67
 # ╠═6225e690-68c5-4e44-a6e6-946a14b1ae37
 # ╠═6773ab39-2cf2-485a-80f5-632b7570c6cd
-# ╠═26b49369-fa5a-4bca-9fee-ad2449e38305
 # ╠═2db68d74-b25b-4e6b-81cc-3ed1b75c538f
 # ╠═4eadd12d-fa37-418a-856a-462479b59d2f
 # ╠═ef78f53b-78b2-4c46-9eeb-99dfa9b1a429
-# ╟─d4938d01-98e9-4172-9ec7-ed2a57f305bf
 # ╠═f5d8b94f-03dd-4ecb-8fd8-a545d70acce5
 # ╠═25b4cc97-1947-458a-bf8f-8bf2a7b8a814
-# ╠═c3e6bf35-aade-4098-a1a4-3ba263971892
 # ╠═c7ba103a-343d-4a8a-8f0d-5277516a62cc
+# ╠═66da45d9-eeb6-46e4-a477-e3d9adc02624
 # ╠═a2a7e310-9e23-452b-9131-ad63c5edaf26
-# ╠═6d096816-1bd0-4b66-8fd2-effd046cd716
-# ╠═0e621ad9-8395-4a19-8687-6cee51ec42af
-# ╠═8600f53b-be4e-4c66-81fd-0830b8b59f02
+# ╠═aad1bf93-6b46-42f4-93c9-5eb5aa04d2e5
+# ╠═78a90a0d-cdc0-483e-b21e-1870a31f9648
+# ╠═b2c5dc1e-1854-4bfd-a5c1-3433349e0928
+# ╠═a16841ee-b9b1-4390-b568-c85adb2ce2c3
+# ╠═f4112e87-9a41-4b7e-ae81-fe2f8547da23
+# ╠═b8fa49cf-cb20-48ea-86a4-37e3eceecf93
+# ╠═7c4f5a51-8555-42ce-9c50-9e58e2f4e293
+# ╠═624569e8-ec14-4614-95b4-36e49af24adc
+# ╠═d1097d6a-ef7d-4817-8754-503d36db7c84
+# ╠═adcff601-1a16-4e53-8437-38f91547a7bb
+# ╠═ff001d70-b531-4c49-96a8-756a783b7842
+# ╠═8a0909fc-fbde-4b3c-8f49-fe5ff1bf20da
+# ╠═dc2c8209-e37c-405b-82fd-3ba49da7ac93
+# ╠═e78d4497-acb2-4fed-bbdf-3393c0eeb86b
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

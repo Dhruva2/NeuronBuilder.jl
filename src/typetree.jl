@@ -36,7 +36,7 @@ has_dynamics(n::Neuron, species) = haskey(dynamics(n), species)
 
 # defined for reversal and conductance since they belong to a neuron. not conductance (belongs to Link)
 has_dynamics(n::Neuron, ::Type{Current{I}}) where {I} = true
-has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
+# has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
 
 abstract type Synapse <: Component end
 struct EmptyConnection <: Synapse end
