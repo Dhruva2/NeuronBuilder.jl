@@ -1,6 +1,6 @@
 # NeuronBuilder
 
-This is a quick package for building small networks of detailed, conductance-based neurons out of ion channels and synapses. The idea is that it's easy to use this template and add your own ion channels / synapses, with your choice of dynamics. Iteratively adding these components to a neuronal somatic compartment is done using ModelingToolkit, which makes it scalable to any number of ion channels and synapses.
+This is a quick package for building small networks of detailed, conductance-based neurons out of ion channels and synapses. The idea is that it's easy to use this template and add your own ion channels / synapses, with your choice of dynamics. Iteratively adding these components to a neuron is done using ModelingToolkit, which makes it scalable to any number of ion channels and synapses.
 
 If you want a more flexible platform to build neuron models, with e.g. multiple compartments, from basic components you should check out the more comprehensive package [Conductor.jl](https://github.com/wsphillips/Conductor.jl) (in active development). 
 
@@ -22,13 +22,13 @@ cd NeuronBuilder.jl
 git checkout v0.1.0
 ```
 2. Navigate to the scripts folder
-3. Open a Julia session and run the script you want, for example `include("individual_neurons.jl")`
+3. Open a Julia session and run the script you want, for example `include("neuron_liu.jl")`
 
 ## Running individual neurons
 
 - A sodium channel is created with `Liu.Na(g)` or `Prinz.Na(g)` if the conductance has value `g`. 
-- To reproduce sets of channels as reported in the papers [Liu et. al. 1998](https://www.jneurosci.org/content/18/7/2309) and [Prinz et. al. 2003](https://journals.physiology.org/doi/full/10.1152/jn.00641.2003) use the conversion factors `Liu_conversion` and `Prinz_conversion` to get the right units. You can see how these are specifically given in the `individual_neurons.jl` script and are multiplying with the original `g` value from the papers. 
-- The `gvalues_papers.jl` file has a small collection of conductances coming from various sources. You can copy-paste any of these into the script that simulates a single neuron.
+- To reproduce sets of channels as reported in the papers [Liu et. al. 1998](https://www.jneurosci.org/content/18/7/2309) and [Prinz et. al. 2003](https://journals.physiology.org/doi/full/10.1152/jn.00641.2003) use the conversion factors `Liu_conversion` and `Prinz_conversion` to get the right units. You can see how these are specifically given in the scripts and are multiplying with the original `g` value from the papers. 
+- The `g_values.jl` file has a small collection of conductances coming from various sources. You can copy-paste any of these into the script that simulates a single neuron.
 
 ## Running a network of neurons
 

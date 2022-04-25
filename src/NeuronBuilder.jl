@@ -10,20 +10,15 @@ export t, D
 include("units.jl")
 export Cm, Area, ICS, Params, Reversals
 
-include("channel_types.jl")
-export Synapse, IonChannel, RegIonChannel, RegIon, Soma, Compartment, Component, ComponentSystem, Liu_conversion, Prinz_conversion, syn_conv_factor, EmptyConnection
-
-include("specification_types.jl")
-export Neuron
-include("build_network.jl")
-export build_network
+include("typetree.jl")
+export Species, SpeciesProperty, Ion, SpeciesDynamics, Voltage, Sodium, Potassium, Calcium, Proton, Leak, Reversal, Current, Conductance, mRNA
+export Compartment, Component, FlowChannel, Neuron, Synapse, EmptyConnection, ComponentSystem
+export PlasticityRule, PlasticisedChannel
+export Geometry, NoGeometry, capacitance
 
 include("helper_functions.jl")
-export get_name, get_g, Area, Cm, L2NB, P2NB
-function channel_dynamics() end
-function ionic_current() end
-function calcium_current() end
-function external_params() end
+export get_name, shorthand_name, sensed, actuated, get_sensor, get_actuator, sensed_ions, voltage, sensedvars, vardivide
+export reversals, currents, conductances, instantiate_variables, instantiate_parameters, instantiate_hooks
 
 include("assets/UnitLiu/UnitLiu.jl")
 using .UnitLiu
@@ -37,15 +32,17 @@ include("assets/Prinz/Prinz.jl")
 using .Prinz
 export Prinz
 
+include("neurons.jl")
+export BasicNeuron, BasicVoltageDynamics, EmptyNeuron
+
 include("synapses.jl")
-include("regulation.jl")
-export Regulated
+export Chol, Glut, directed_synapse
 
-include("build_neuron.jl")
+include("build_network.jl")
+export build_network, build_group, add_connection, add_all_connections
 
-export channel_dynamics
+include("plasticity.jl")
+export OLeary_reg, OLearyCalcRegulation
 
-export build_channel, build_neuron, build_group, add_connection
-export Chol, Glut
 
 end
