@@ -21,9 +21,9 @@ EmptyNeuron() = EmptyNeuron(
 dynamics(::EmptyNeuron) = Dict{DataType,SpeciesDynamics}()
 
 
-struct BasicNeuron{G<:Geometry,C<:FlowChannel,F<:Real} <: Neuron
+struct BasicNeuron{G<:Geometry,C<:FlowChannel,F<:Real,S<:SpeciesDynamics} <: Neuron
     geometry::G
-    dynamics::Dict{DataType,SpeciesDynamics}
+    dynamics::Dict{DataType,S}
     somatic_parameters::Dict{DataType,F}
     channels::Vector{C}
     name::Symbol
