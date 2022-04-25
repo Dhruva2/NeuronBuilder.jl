@@ -1,26 +1,40 @@
-using ModelingToolkit, OrdinaryDiffEq, Plots, .NeuronBuilder, Unitful
+using ModelingToolkit, OrdinaryDiffEq, Plots, NeuronBuilder, Unitful
 import Unitful: mV, mS, cm, mm, nA, mA, µA, ms, nF, μM
 
-const area = Area(0.628e-3cm^2) # Prinz/Liu 0.0628 mm^2
 const Cₘ = Cm() # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
 
-Prinz_conv = Cₘ / area
-syn_conv_factor = 1e-3 / area^2 #this gives synaptic conductances in μS/mm^2 
+Liu_conv = Cₘ
 
-ics = ICS(Dict(:V => -60.0mV, :Ca => 0.05μM))
+channels = [UnitLiu.Na(700.0 * Liu_conv), UnitLiu.CaS(4.0 * Liu_conv), UnitLiu.CaT(2.0 * Liu_conv), UnitLiu.Ka(50.0 * Liu_conv), UnitLiu.KCa(40.0 * Liu_conv),
+    UnitLiu.Kdr(70.0 * Liu_conv), UnitLiu.H(0.03 * Liu_conv)]
 
-reversals = Reversals(Dict(:ENa => 50.0mV, :EH => -20.0mV, :EK => -80.0mV, :ELeak => -50.0mV))
+#params = Params(Dict(:τCa => 200.0ms, :Ca∞ => 0.05µM, :Iapp => 0.0nA / mm^2))
 
-params = Params(Dict(:area => area, :Cₘ => Cₘ, :τCa => 200.0ms, :Ca∞ => 0.05µM, :Iapp => 0.0nA/mm^2))
+#defaults doesn't have units yet
+τCa = 200.0
+Ca∞ = 0.05
+fxarea = 14.96 * 0.0628
 
-compart = Soma(ics, merge(reversals, params))
-neur = Neuron(compart, AB2_ch, :ABneuron)
-#Prinz_conv = Prinz_conversion(compart)
+defaults = Dict(Voltage => BasicVoltageDynamics(),
+    Calcium => Prinz.CalciumDynamics(τCa, Ca∞, fxarea),
+    Reversal{Calcium} => Prinz.CaReversalDynamics())
 
+ics = ICS(Dict(Voltage => -60.0mV, Calcium => 0.05μM))
 
-# AB2_ch = [Prinz.Na(100 * Prinz_conv), Prinz.CaS(6 * Prinz_conv), Prinz.CaT(2.5 * Prinz_conv), Prinz.H(0.01 * Prinz_conv),
-#     Prinz.Ka(50 * Prinz_conv), Prinz.KCa(5 * Prinz_conv), Prinz.Kdr(100 * Prinz_conv), Prinz.Leak(0.0)]
+reversals = Reversals(Dict(Reversal{Sodium} => 50.0mV,
+    Reversal{Potassium} => -80.0mV,
+    Reversal{Leak} => -50.0mV,
+    Reversal{Proton} => -20.0mV,
+    Reversal{Calcium} => 0.0mV))
 
+somatic_parameters = merge(ics, reversals)
 
-# prob = ODEProblem(neur.ODESystem, [], (0.0, 2500.0), [])
-# @time sol_individual = solve(prob, Rosenbrock23())
+#somatic_parameters has to be converted back to subtype of real OR change BasicNeuron struct to accept Quantities 
+b = BasicNeuron(NoGeometry(Cm), defaults, somatic_parameters, channels, :test_UnitLiu)
+
+neur = b()
+
+prob = ODEProblem(neur, [], (0.0, 5000.0), [])
+
+sol = solve(prob, AutoTsit5(Rosenbrock23()))
+plot(sol)
