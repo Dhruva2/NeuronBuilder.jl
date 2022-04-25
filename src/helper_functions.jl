@@ -22,11 +22,16 @@ shorthand_name(::Type{Current{T}}) where {T} = Symbol(:I, shorthand_name(T))
 shorthand_name(::Type{Conductance{T}}) where {T} = Symbol(:g, shorthand_name(T))
 shorthand_name(::Type{mRNA{T}}) where {T} = Symbol(:mRNA_, shorthand_name(T))
 
+shorthand_name(::Type{PseudoIon}) = :external
+
 shorthand_name(x::Type{Tuple{T,R}}) where {T,R} = shorthand_name.(x.types)
 
+shorthand_name(::Type{Nothing}) = nothing
 
 sensed(::FlowChannel{S,A}) where {S,A} = typeflatten(S)
+sensed(::FlowChannel{S,A}) where {S<:Tuple{Nothing},A} = Vector{DataType}()
 actuated(::FlowChannel{S,A}) where {S,A} = typeflatten(A)
+actuated(::FlowChannel{S,A}) where {S,A<:Tuple{Nothing}} = Vector{DataType}()
 
 function typeflatten(s::DataType)
     map(fieldtypes(s)) do el
@@ -98,13 +103,14 @@ instantiate_variables(v::Vector{Symbol}) =
     map(v) do f
         @variables $f(t)
     end |> Iterators.flatten |> collect
+instantiate_variables(v::Symbol) = instantiate_variables([v])
 
 
 instantiate_parameters(v::Vector{Symbol}) =
     map(v) do f
         @variables $f
     end |> Iterators.flatten |> collect
-
+instantiate_parameters(v::Symbol) = instantiate_parameters([v])
 
 get_actuator(c::FlowChannel, sys::ODESystem, v::Type{Voltage}) =
     sum(currents(c)) do I
@@ -118,7 +124,7 @@ function get_actuator(c::FlowChannel, sys::ODESystem, f::DataType)
 end
 
 function get_sensor(c::FlowChannel, sys::ODESystem, f::DataType)
-    if f ∈ sensed(c)
+    if !isnothing(f) && f ∈ sensed(c)
         return ModelingToolkit.getvar(sys, shorthand_name(f); namespace=true)
     end
 end

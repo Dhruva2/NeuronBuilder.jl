@@ -74,7 +74,7 @@ function (b::BasicNeuron)(;
     has_dynamics(species) = haskey(b.dynamics, species)
 
     # track union of things sensed by the connected channels
-    tracked_names = vcat(Voltage, b.channels .|> sensed |> el -> filter(x -> x !== nothing, el) |> Iterators.flatten |> unique)
+    tracked_names = vcat(Voltage, b.channels .|> sensed |> el -> filter(!isnothing, el) |> Iterators.flatten |> unique)
 
     state_indices = findall(has_dynamics, tracked_names)
     param_indices = findall(!has_dynamics, tracked_names)
