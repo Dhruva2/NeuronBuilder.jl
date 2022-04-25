@@ -54,7 +54,7 @@ function (ch::K)(n::Neuron; name=get_name(ch))
     @variables m(t)
 
     eqs = [
-        D(m) ~ αₙ(ch,V) * (1 - m) - βₙ(ch,V) * m,
+        D(m) ~ αₘ(ch,V) * (1 - m) - βₘ(ch,V) * m,
         I ~ g * m^4 * (E - V)
     ]
 

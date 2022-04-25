@@ -137,7 +137,7 @@ default_params(::SpeciesDynamics, a, b, c) = Dict{Num,Float64}()
 default_states(::SpeciesDynamics, a, b, c) = Dict{Num,Float64}()
 
 
-function get_from(d::Dict{DataType,SpeciesDynamics}, func)
+function get_from(d::Dict{DataType,S}, func) where S<:SpeciesDynamics
     muddled = d |> values .|> func |> x -> filter(y -> !isnothing(y), x)
     isempty(muddled) && return Vector{Num}[]
     return reduce(vcat, muddled)::Vector{Num}
