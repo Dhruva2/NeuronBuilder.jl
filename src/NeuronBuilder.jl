@@ -16,6 +16,10 @@ include("helper_functions.jl")
 export get_name, shorthand_name, sensed, actuated, get_sensor, get_actuator, sensed_ions, voltage, sensedvars, vardivide
 export reversals, currents, conductances, instantiate_variables, instantiate_parameters, instantiate_hooks
 
+include("assets/HH/HH.jl")
+using .HH
+export HH
+
 include("assets/Liu/Liu.jl")
 using .Liu
 export Liu
