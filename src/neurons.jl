@@ -43,10 +43,11 @@ building neuron
 """
 
 function (b::BasicNeuron)(; incoming_connections::Integer=0)
-    #shared -> hooks
+    #suggestion: shared -> hooks
     # e.g. species = Voltage or species = Potassium
     has_dynamics(species) = haskey(b.dynamics, species)
-    # track union of things sensed by the connected channels
+    
+    # track union of variables sensed by the connected channels
     tracked_names = vcat(
         Voltage, 
         b.channels .|> sensed |> Iterators.flatten |> unique,

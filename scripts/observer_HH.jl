@@ -15,4 +15,9 @@ somatic_parameters = Dict(
     Voltage => -60.0)
 
 hh = BasicNeuron(NoGeometry(Cₘ), dynamics, somatic_parameters, channels, :HH) #point neuron
-neur = hh()
+hh_eqs = hh()
+
+prob = ODEProblem(hh_eqs, [], (0.0, 5000.0), [])
+
+sol = solve(prob, AutoTsit5(Rosenbrock23()))
+plot(sol)
