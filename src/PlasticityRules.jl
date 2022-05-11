@@ -1,3 +1,15 @@
+"""
+abstract type PlasticityRule{S} end
+
+struct PlasticisedChannel{S,S2,A,C<:FlowChannel{S,A},P<:PlasticityRule{S2}} <: FlowChannel{Tuple{S,S2},A}
+    channel::C
+    modification::P
+end
+
+"""
+
+
+
 
 function (p::PlasticisedChannel)(n::Neuron)
     p.modification(p.channel, n)

@@ -1,14 +1,10 @@
+dynamics(n::Neuron) = n.dynamics
+has_dynamics(n::Neuron, species) = haskey(dynamics(n), species)
 
-struct BasicVoltageDynamics <: SpeciesDynamics{Voltage} end
+# defined for reversal and conductance since they belong to a neuron. not conductance (belongs to Link)
+has_dynamics(n::Neuron, ::Type{Current{I}}) where {I} = true
+# has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
 
-function (b::BasicVoltageDynamics)(n::Neuron, vars, varnames, flux)
-    Cₘ, = get_parameters(b)
-    V = vars[findfirst(x -> x == Voltage, varnames)]
-    return D(V) ~ (1 / Cₘ) * (flux) #non-standard convention, sum of fluxes already has negative sign because of the (E-V) in currents
-end
-
-get_parameters(::BasicVoltageDynamics) = @parameters Cₘ
-default_params(v::BasicVoltageDynamics, n::Neuron, vars, varnames) = Dict(get_parameters(v)... => capacitance(n.geometry))
 
 
 struct EmptyNeuron{F<:Number} <: Neuron
@@ -48,7 +44,7 @@ function (b::BasicNeuron)(; incoming_connections::Integer=0)
     has_dynamics(species) = haskey(b.dynamics, species)
     # track union of things sensed by the connected channels
     tracked_names = vcat(
-        Voltage, 
+        Voltage,
         b.channels .|> sensed |> Iterators.flatten |> unique,
         [keys(b.dynamics)...]
     ) |> unique!
