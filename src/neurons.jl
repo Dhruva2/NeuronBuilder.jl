@@ -1,14 +1,10 @@
+dynamics(n::Neuron) = n.dynamics
+has_dynamics(n::Neuron, species) = haskey(dynamics(n), species)
 
-struct BasicVoltageDynamics <: SpeciesDynamics{Voltage} end
+# defined for reversal and conductance since they belong to a neuron. not conductance (belongs to Link)
+has_dynamics(n::Neuron, ::Type{Current{I}}) where {I} = true
+# has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
 
-function (b::BasicVoltageDynamics)(n::Neuron, vars, varnames, flux)
-    Cₘ, = get_parameters(b)
-    V = vars[findfirst(x -> x == Voltage, varnames)]
-    return D(V) ~ (1 / Cₘ) * (flux) #non-standard convention, sum of fluxes already has negative sign because of the (E-V) in currents
-end
-
-get_parameters(::BasicVoltageDynamics) = @parameters Cₘ
-default_params(v::BasicVoltageDynamics, n::Neuron, vars, varnames) = Dict(get_parameters(v)... => capacitance(n.geometry))
 
 struct ResetDynamics{T<:Number} <: SpeciesDynamics{Voltage}
     V_threshold::T
@@ -45,9 +41,9 @@ EmptyNeuron() = EmptyNeuron(
 dynamics(::EmptyNeuron) = Dict{DataType,SpeciesDynamics}()
 
 
-struct BasicNeuron{G<:Geometry,C<:FlowChannel,F<:Real} <: Neuron
+struct BasicNeuron{G<:Geometry,C<:FlowChannel,F<:Real,S<:SpeciesDynamics} <: Neuron
     geometry::G
-    dynamics::Dict{DataType,SpeciesDynamics}
+    dynamics::Dict{DataType,S}
     somatic_parameters::Dict{DataType,F}
     channels::Vector{C}
     name::Symbol
@@ -72,9 +68,20 @@ function (b::BasicNeuron)(;
     #shared -> hooks
     # e.g. species = Voltage or species = Potassium
     has_dynamics(species) = haskey(b.dynamics, species)
-
     # track union of things sensed by the connected channels
+<<<<<<< HEAD
     tracked_names = vcat(Voltage, b.channels .|> sensed |> el -> filter(!isnothing, el) |> Iterators.flatten |> unique)
+=======
+<<<<<<< HEAD
+    tracked_names = vcat(Voltage, b.channels .|> sensed |> el -> filter(x -> x !== nothing, el) |> Iterators.flatten |> unique)
+=======
+    tracked_names = vcat(
+        Voltage,
+        b.channels .|> sensed |> Iterators.flatten |> unique,
+        [keys(b.dynamics)...]
+    ) |> unique!
+>>>>>>> origin/master
+>>>>>>> master
 
     state_indices = findall(has_dynamics, tracked_names)
     param_indices = findall(!has_dynamics, tracked_names)
@@ -82,16 +89,20 @@ function (b::BasicNeuron)(;
     # build state/param ModelingToolkit variables for each of these tracked species 
     tracked = zeros(Num, length(tracked_names))
 
-    tracked[state_indices] = reduce(vcat,
+    tracked[state_indices] .= reduce(vcat,
         tracked_names[state_indices] .|> shorthand_name
-    ) |> instantiate_variables
+        |> instantiate_variables)
 
-    tracked[param_indices] = reduce(vcat,
+    tracked[param_indices] .= reduce(vcat,
         tracked_names[param_indices] .|> shorthand_name
-    ) |> instantiate_parameters
+        |> instantiate_parameters)
 
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:incoming_connections]]
+<<<<<<< HEAD
     my_sum(syns) = incoming_connections == 0 ? 0 : sum(reduce(vcat, syns))
+=======
+    my_sum(syns) = incoming_connections == 0 ? 0.0 : sum(reduce(vcat, syns))
+>>>>>>> origin/master
     !(incoming_connections == 0) && (syns = reduce(vcat, syns))
     chs = [ch(b) for ch in b.channels]
 
@@ -106,7 +117,7 @@ function (b::BasicNeuron)(;
 
     # hook connections between channel sensors and tracked variables. 
     outward_connections = reduce(vcat, map(tracked_names, tracked) do species, variable
-        [variable ~ get_sensor(ch, ch_sys, species) for (ch, ch_sys) in zip(b.channels, chs) if (get_sensor(ch, ch_sys, species) !== nothing)]
+        [(variable ~ get_sensor(ch, ch_sys, species))::Equation for (ch, ch_sys) in zip(b.channels, chs) if (get_sensor(ch, ch_sys, species) !== nothing)]::Vector{Equation}
     end)
 
     outward_species = reduce(vcat, map(tracked_names) do species
@@ -156,5 +167,11 @@ function (b::BasicNeuron)(;
         name = b.name
     )
     return (incoming_connections == 0) ? structural_simplify(sys) : sys
+<<<<<<< HEAD
 
 end
+=======
+end
+
+export get_from, get_states, default_states, default_params, get_parameters
+>>>>>>> origin/master
