@@ -43,3 +43,5 @@ git checkout v0.1.0
 - You can copy-paste the structure of those modules, just changing the dynamics and channel names.
 - Feel free to send us the library you built to push to the master branch! :)
 
+## Acknowledgements
+This work was funded by European Research Council grant 716643 FLEXNEURO, (Principal Investigator Timothy O’Leary). 
