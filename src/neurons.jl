@@ -6,31 +6,7 @@ has_dynamics(n::Neuron, ::Type{Current{I}}) where {I} = true
 # has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
 
 
-struct ResetDynamics{T<:Number} <: SpeciesDynamics{Voltage}
-    V_threshold::T
-    V_reset::T
-    function ResetDynamics(x::T, y::T) where {T<:Number}
-        x < y ? error("Threshold lower value than reset.") : new{T}(x, y)
-    end
-end
 
-get_parameters(::ResetDynamics) = @parameters Cₘ V_threshold V_reset
-default_params(l::ResetDynamics, n::Neuron, vars, varnames) = Dict(
-    get_parameters(l) .=> (capacitance(n.geometry), l.V_threshold, l.V_reset)
-)
-
-function (b::ResetDynamics)(n::Neuron, vars, varnames, flux)
-    Cₘ, V_threshold, V_reset = get_parameters(b)
-    V = vars[findfirst(x -> x == Voltage, varnames)]
-    return D(V) ~ (1 / Cₘ) * (flux) #non-standard convention, sum of fluxes already has negative sign because of the (E-V) in currents
-end
-
-kwargs(::SpeciesDynamics, vars, varnames) = nothing
-function kwargs(b::ResetDynamics, vars, varnames) 
-    V = vars[findfirst(x -> x == Voltage, varnames)]
-    reset = [V ~ b.V_threshold] => [V ~ b.V_reset]
-    return Dict(:continuous_events => reset)
-end
 struct EmptyNeuron{F<:Number} <: Neuron
     somatic_parameters::Dict{DataType,F}
 end
@@ -57,27 +33,20 @@ building neuron
 - reversals are defined by the ion channels to which it is connected, same for currents
 - channels which have a PlasticityRule (need extra sensors) are treated inside b the same way as those that don't 
 - update equations: voltage equation gets added synapses...for now. TODO Make synapses like channels
-
 # DO LATER: to make it easier for the user, add an extra input which is var (the var in question). so they dont have to find eg voltage by searching through vars and varnames
 # add b as input to channels so they can sense whether their inputs are parmeters or not, using b.dynamics
 """
 
-function (b::BasicNeuron)(; 
-    incoming_connections::Integer=0)
-
+function (b::BasicNeuron)(; incoming_connections::Integer=0)
     #shared -> hooks
     # e.g. species = Voltage or species = Potassium
     has_dynamics(species) = haskey(b.dynamics, species)
     # track union of things sensed by the connected channels
-<<<<<<< HEAD
-    tracked_names = vcat(Voltage, b.channels .|> sensed |> el -> filter(x -> x !== nothing, el) |> Iterators.flatten |> unique)
-=======
     tracked_names = vcat(
         Voltage,
         b.channels .|> sensed |> Iterators.flatten |> unique,
         [keys(b.dynamics)...]
     ) |> unique!
->>>>>>> origin/master
 
     state_indices = findall(has_dynamics, tracked_names)
     param_indices = findall(!has_dynamics, tracked_names)
@@ -94,19 +63,15 @@ function (b::BasicNeuron)(;
         |> instantiate_parameters)
 
     syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:incoming_connections]]
-<<<<<<< HEAD
-    my_sum(syns) = incoming_connections == 0 ? 0 : sum(reduce(vcat, syns))
-=======
     my_sum(syns) = incoming_connections == 0 ? 0.0 : sum(reduce(vcat, syns))
->>>>>>> origin/master
     !(incoming_connections == 0) && (syns = reduce(vcat, syns))
     chs = [ch(b) for ch in b.channels]
 
     tracked_fluxes = map(tracked_names[state_indices]) do thing
         sum(zip(b.channels, chs)) do (channel, channel_sys)
             get_actuator(channel, channel_sys, thing)
-        end
-    end
+        end |> Num
+    end 
 
     # UGLY, make better. maybe add generality for syns:. Like hooks = {Voltage, 3}
     tracked_fluxes[findfirst(x -> x == Voltage, tracked_names)] += my_sum(syns)
@@ -159,15 +124,9 @@ function (b::BasicNeuron)(;
         ;
         systems=chs,
         defaults=merge(state_defaults, parameter_defaults, somatic_state_defaults, somatic_param_defaults),
-        ((kwargs(el, tracked, tracked_names) for el in values(b.dynamics))...)...,
-        name = b.name
+        name=b.name
     )
     return (incoming_connections == 0) ? structural_simplify(sys) : sys
-<<<<<<< HEAD
-
-end
-=======
 end
 
 export get_from, get_states, default_states, default_params, get_parameters
->>>>>>> origin/master

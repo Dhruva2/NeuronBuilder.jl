@@ -40,11 +40,17 @@ include("assets/Prinz/Prinz.jl")
 using .Prinz
 export Prinz
 
+function channel_dynamics() end
+
+include("assets/HodgkinHuxley/HodgkinHuxley.jl")
+using .HodgkinHuxley
+export HodgkinHuxley
+
 include("Neurons.jl")
 export BasicNeuron, BasicVoltageDynamics, EmptyNeuron
 
 include("Synapses.jl")
-export Chol, Glut, directed_synapse
+export Chol, Glut, directed_synapse 
 
 include("Networks.jl")
 export build_network, build_group, add_connection, add_all_connections
