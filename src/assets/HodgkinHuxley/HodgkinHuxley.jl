@@ -10,6 +10,7 @@ include("channels.jl")
 include("synapses.jl")
 
 export channel_dynamics
+export syn_current
 export get_parameters, get_states, default_params, default_states
 
 end
