@@ -37,7 +37,7 @@ building neuron
 # add b as input to channels so they can sense whether their inputs are parmeters or not, using b.dynamics
 """
 
-function (b::BasicNeuron)(; incoming_connections::Integer=0)
+function (b::BasicNeuron)(; incoming_connections::Union{Integer, Bool} = false)
     #shared -> hooks
     # e.g. species = Voltage or species = Potassium
     has_dynamics(species) = haskey(b.dynamics, species)
@@ -126,7 +126,11 @@ function (b::BasicNeuron)(; incoming_connections::Integer=0)
         defaults=merge(state_defaults, parameter_defaults, somatic_state_defaults, somatic_param_defaults),
         name=b.name
     )
-    return (incoming_connections == 0) ? structural_simplify(sys) : sys
+    if typeof(incoming_connections) == Bool && !incoming_connections
+        return structural_simplify(sys)
+    elseif typeof(incoming_connections) <: Integer
+        return sys
+    end
 end
 
 export get_from, get_states, default_states, default_params, get_parameters
