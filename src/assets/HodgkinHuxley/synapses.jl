@@ -1,5 +1,5 @@
 mutable struct GABA_A{T<:AbstractFloat} <: Synapse
-    ḡGABA::T
+    ḡGABA_A::T
     s::T
     Eₛ::T
     τ_R::T
@@ -17,9 +17,9 @@ function channel_dynamics(channel::GABA_A, Vpre, Vpost)
         D(s) ~ 0.5 * (1 + tanh(Vpre / 10.)) * ((1 - s) / channel.τ_R) - s / channel.τ_D,
         IGABA_A ~ -ḡGABA_A * s * (Vpost - channel.Eₛ)
         ]
-    current = eqs[2]
+    current = [eqs[2]]
 
-    defaultmap = [s => channel.s, ḡAMPA => channel.ḡGABA_A]
+    defaultmap = [s => channel.s, ḡGABA_A => channel.ḡGABA_A]
 
     return eqs, states, parameters, current, defaultmap
 end
@@ -43,7 +43,7 @@ function channel_dynamics(channel::AMPA, Vpre, Vpost)
         D(s) ~ 0.5 * (1 + tanh(Vpre / 10.)) * ((1 - s) / channel.τ_R) - s / channel.τ_D,
         IAMPA ~ -ḡAMPA * s * (Vpost - channel.Eₛ)
         ]
-    current = eqs[2]
+    current = [eqs[2]]
 
     defaultmap = [s => channel.s, ḡAMPA => channel.ḡAMPA]
 

@@ -42,10 +42,6 @@ export Prinz
 
 function channel_dynamics() end
 
-include("assets/HodgkinHuxley/HodgkinHuxley.jl")
-using .HodgkinHuxley
-export HodgkinHuxley
-
 include("Neurons.jl")
 export BasicNeuron, BasicVoltageDynamics, EmptyNeuron
 
