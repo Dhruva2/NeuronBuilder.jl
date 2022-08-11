@@ -42,6 +42,8 @@ function (b::BasicNeuron)(; incoming_connections::Union{Integer, Bool} = false)
     # e.g. species = Voltage or species = Potassium
     has_dynamics(species) = haskey(b.dynamics, species)
     # track union of things sensed by the connected channels
+
+    tracked_names = vcat(Voltage, b.channels .|> sensed |> el -> filter(!isnothing, el) |> Iterators.flatten |> unique)
     tracked_names = vcat(
         Voltage,
         b.channels .|> sensed |> Iterators.flatten |> unique,
