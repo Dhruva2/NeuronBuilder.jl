@@ -6,7 +6,31 @@ has_dynamics(n::Neuron, ::Type{Current{I}}) where {I} = true
 # has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
 
 
+struct ResetDynamics{T<:Number} <: SpeciesDynamics{Voltage}
+    V_threshold::T
+    V_reset::T
+    function ResetDynamics(x::T, y::T) where {T<:Number}
+        x < y ? error("Threshold lower value than reset.") : new{T}(x, y)
+    end
+end
 
+get_parameters(::ResetDynamics) = @parameters Cₘ V_threshold V_reset
+default_params(l::ResetDynamics, n::Neuron, vars, varnames) = Dict(
+    get_parameters(l) .=> (capacitance(n.geometry), l.V_threshold, l.V_reset)
+)
+
+function (b::ResetDynamics)(n::Neuron, vars, varnames, flux)
+    Cₘ, V_threshold, V_reset = get_parameters(b)
+    V = vars[findfirst(x -> x == Voltage, varnames)]
+    return D(V) ~ (1 / Cₘ) * (flux) #non-standard convention, sum of fluxes already has negative sign because of the (E-V) in currents
+end
+
+kwargs(::SpeciesDynamics, vars, varnames) = nothing
+function kwargs(b::ResetDynamics, vars, varnames) 
+    V = vars[findfirst(x -> x == Voltage, varnames)]
+    reset = [V ~ b.V_threshold] => [V ~ b.V_reset]
+    return Dict(:continuous_events => reset)
+end
 struct EmptyNeuron{F<:Number} <: Neuron
     somatic_parameters::Dict{DataType,F}
 end
@@ -33,6 +57,7 @@ building neuron
 - reversals are defined by the ion channels to which it is connected, same for currents
 - channels which have a PlasticityRule (need extra sensors) are treated inside b the same way as those that don't 
 - update equations: voltage equation gets added synapses...for now. TODO Make synapses like channels
+
 # DO LATER: to make it easier for the user, add an extra input which is var (the var in question). so they dont have to find eg voltage by searching through vars and varnames
 # add b as input to channels so they can sense whether their inputs are parmeters or not, using b.dynamics
 """
@@ -128,11 +153,14 @@ function (b::BasicNeuron)(; incoming_connections::Union{Integer, Bool} = false)
         defaults=merge(state_defaults, parameter_defaults, somatic_state_defaults, somatic_param_defaults),
         name=b.name
     )
+
     if typeof(incoming_connections) == Bool && !incoming_connections
         return structural_simplify(sys)
     elseif typeof(incoming_connections) <: Integer
         return sys
     end
+
+
 end
 
 export get_from, get_states, default_states, default_params, get_parameters
