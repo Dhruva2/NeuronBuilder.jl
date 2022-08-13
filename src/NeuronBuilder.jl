@@ -45,7 +45,7 @@ function channel_dynamics() end
 include("neurons.jl")
 export BasicNeuron, BasicVoltageDynamics, ResetDynamics, EmptyNeuron
 
-include("Synapses.jl")
+include("synapses.jl")
 export Chol, Glut, directed_synapse
 
 include("Networks.jl")
