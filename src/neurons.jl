@@ -151,6 +151,7 @@ function (b::BasicNeuron)(; incoming_connections::Union{Integer, Bool} = false)
         ;
         systems=chs,
         defaults=merge(state_defaults, parameter_defaults, somatic_state_defaults, somatic_param_defaults),
+        ((kwargs(el, tracked, tracked_names) for el in values(b.dynamics))...)...,
         name=b.name
     )
 
