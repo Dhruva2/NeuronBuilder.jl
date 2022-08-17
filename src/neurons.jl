@@ -25,7 +25,7 @@ function (b::ResetDynamics)(n::Neuron, vars, varnames, flux)
     return D(V) ~ (1 / Cₘ) * (flux) #non-standard convention, sum of fluxes already has negative sign because of the (E-V) in currents
 end
 
-kwargs(::SpeciesDynamics, vars, varnames) = nothing
+kwargs(::SpeciesDynamics, vars, varnames) = Dict()
 function kwargs(b::ResetDynamics, vars, varnames) 
     V = vars[findfirst(x -> x == Voltage, varnames)]
     reset = [V ~ b.V_threshold] => [V ~ b.V_reset]
