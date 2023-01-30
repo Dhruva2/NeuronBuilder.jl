@@ -51,7 +51,4 @@ export Chol, Glut, directed_synapse
 include("Networks.jl")
 export build_network, build_group, add_connection, add_all_connections
 
-
-
-
 end
