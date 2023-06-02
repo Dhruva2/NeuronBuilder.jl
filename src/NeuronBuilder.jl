@@ -40,6 +40,11 @@ include("assets/Prinz/Prinz.jl")
 using .Prinz
 export Prinz
 
+
+include("assets/HodgkinHuxley/HodgkinHuxley.jl")
+using .HodgkinHuxley
+export HodgkinHuxley
+
 function channel_dynamics() end
 
 include("neurons.jl")

@@ -5,7 +5,7 @@ Running the STG network
 - You can plot variables by their names with plot(sol;  vars = [STG.AB₊V]). 
 """
 
-using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
+using ModelingToolkit, OrdinaryDiffEq, Plots
 
 const Area = 0.0628 # Prinz/Liu 0.0628 mm2
 const Cm = 10.0 # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
@@ -139,6 +139,6 @@ prob_2 = ODEProblem(stg_2, [], tspan, []; jac=true)
 
 @time sol_2 = solve(prob_2, AutoTsit5(Rosenbrock23()))
 
-plot(sol_2, xlims=(5000, 10000), fg_legend = :transparent; vars=[stg_2.AB₊V, stg_2.LP₊V, stg_2.PY₊V, stg_2.PY₊CaS₊ICa], layout=(4, 1))
+plot(sol_2, xlims=(5000, 10000), fg_legend = :transparent; idxs=[stg_2.AB₊V, stg_2.LP₊V, stg_2.PY₊V, stg_2.PY₊CaS₊ICa], layout=(4, 1))
 
 

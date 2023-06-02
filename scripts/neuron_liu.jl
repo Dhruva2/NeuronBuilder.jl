@@ -2,7 +2,7 @@
 Liu bursting neuron script
 """
 
-using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
+using ModelingToolkit, OrdinaryDiffEq, Plots
 
 const Cm = 10.0 # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
 Liu_conv = Cm

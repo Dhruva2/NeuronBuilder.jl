@@ -1,4 +1,4 @@
-using NeuronBuilder, ModelingToolkit, OrdinaryDiffEq, Plots
+using ModelingToolkit, OrdinaryDiffEq, Plots
 
 const Cm = 10.0 # specific capacitance cₘ is a biological constant (around) 10 nF/mm^2
 Liu_conv = Cm
@@ -6,7 +6,7 @@ Liu_conv = Cm
 channels = [Liu.Na(700.0 * Liu_conv), Liu.CaS(4.0 * Liu_conv), Liu.CaT(2.0 * Liu_conv), Liu.Ka(50.0 * Liu_conv), Liu.KCa(40.0 * Liu_conv),
     Liu.Kdr(70.0 * Liu_conv), Liu.H(0.03 * Liu_conv), Liu.leak(0.01 * Liu_conv)]
 
-τmRNAs = [5e4 5e4 5e4 5e4 5e4 5e4 5e4]
+τmRNAs = repeat([5e4], 7)
 τg = 1e4
 Ca_tgt = 5.0 
 

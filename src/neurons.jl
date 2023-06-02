@@ -25,11 +25,11 @@ function (b::ResetDynamics)(n::Neuron, vars, varnames, flux)
     return D(V) ~ (1 / Cₘ) * (flux) #non-standard convention, sum of fluxes already has negative sign because of the (E-V) in currents
 end
 
-kwargs(::SpeciesDynamics, vars, varnames) = Dict()
+kwargs(::SpeciesDynamics, vars, varnames) = NamedTuple()
 function kwargs(b::ResetDynamics, vars, varnames) 
     V = vars[findfirst(x -> x == Voltage, varnames)]
     reset = [V ~ b.V_threshold] => [V ~ b.V_reset]
-    return Dict(:continuous_events => reset)
+    return (:continuous_events => reset,)
 end
 struct EmptyNeuron{F<:Number} <: Neuron
     somatic_parameters::Dict{DataType,F}
@@ -150,11 +150,11 @@ function (b::BasicNeuron)(; incoming_connections::Union{Integer, Bool} = false)
         somatic_params
         ;
         systems=chs,
-        defaults=merge(state_defaults, parameter_defaults, somatic_state_defaults, somatic_param_defaults),
+        defaults=merge(state_defaults, parameter_defaults, 
+        somatic_state_defaults, somatic_param_defaults),
         ((kwargs(el, tracked, tracked_names) for el in values(b.dynamics))...)...,
-        name=b.name
+        name=b.name,
     )
-
     if typeof(incoming_connections) == Bool && !incoming_connections
         return structural_simplify(sys)
     elseif typeof(incoming_connections) <: Integer
