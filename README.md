@@ -19,7 +19,7 @@ To try out the demo scripts:
 ```
 git clone https://github.com/Dhruva2/NeuronBuilder.jl
 cd NeuronBuilder.jl
-git checkout v0.2.4
+git checkout v0.2.5
 ```
 2. Navigate to the scripts folder. Once there, activate the environment 
 ```
