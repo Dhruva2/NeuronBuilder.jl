@@ -40,7 +40,7 @@ prob = ODEProblem(neur, [], (0.0, 15000.0), [])
 sol = @time solve(prob, AutoTsit5(Rosenbrock23()))
 
 
-p1 = plot(sol, vars=[neur.V, neur.Ca])
-p2 = plot(sol, vars=[neur.Na_regul₊mRNA, neur.CaS_regul₊mRNA, neur.CaT_regul₊mRNA, neur.Ka_regul₊mRNA, neur.KCa_regul₊mRNA, neur.Kdr_regul₊mRNA, neur.H_regul₊mRNA], title="mRNAs", titlefontsize=9)
-p3 = plot(sol, vars=[neur.Na_regul₊gNa, neur.CaS_regul₊gCa, neur.CaT_regul₊gCa, neur.Ka_regul₊gK, neur.KCa_regul₊gK, neur.Kdr_regul₊gK, neur.H_regul₊gH], title="conductances", titlefontsize=9)
+p1 = plot(sol, idxs=[neur.V, neur.Ca])
+p2 = plot(sol, idxs=[neur.Na_regul₊mRNA, neur.CaS_regul₊mRNA, neur.CaT_regul₊mRNA, neur.Ka_regul₊mRNA, neur.KCa_regul₊mRNA, neur.Kdr_regul₊mRNA, neur.H_regul₊mRNA], title="mRNAs", titlefontsize=9)
+p3 = plot(sol, idxs=[neur.Na_regul₊gNa, neur.CaS_regul₊gCa, neur.CaT_regul₊gCa, neur.Ka_regul₊gK, neur.KCa_regul₊gK, neur.Kdr_regul₊gK, neur.H_regul₊gH], title="conductances", titlefontsize=9)
 plot(p1,p2,p3,layout=(3,1), legend=false)

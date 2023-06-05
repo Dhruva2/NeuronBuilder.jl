@@ -19,9 +19,12 @@ To try out the demo scripts:
 ```
 git clone https://github.com/Dhruva2/NeuronBuilder.jl
 cd NeuronBuilder.jl
-git checkout v0.1.0
+git checkout v0.2.4
 ```
-2. Navigate to the scripts folder
+2. Navigate to the scripts folder. Once there, activate the environment 
+```
+] activate .
+```
 3. Open a Julia session and run the script you want, for example `include("neuron_liu.jl")`
 
 ## Running individual neurons
