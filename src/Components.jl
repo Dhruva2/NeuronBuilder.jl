@@ -1,4 +1,5 @@
-abstract type Component end
+abstract type AbstractComponent end 
+abstract type Component <: AbstractComponent end
 
 function get_name(ch::Component)
     Base.typename(ch |> typeof).name |> Symbol
@@ -8,28 +9,187 @@ end
 
 
 abstract type Compartment <: Component end
-abstract type FlowChannel{Sensors<:Tuple,Actuators<:Tuple} <: Component end
+abstract type BasicChannel <: Component end
+abstract type DirectedChannel <: BasicChannel end
+struct EmptySynapse <: DirectedChannel end 
+
+
+# is_dynamic(::BasicChannel, ::Current{S}) where {S}  = true
+# is_dynamic(::BasicChannel, ::Conductance{S}) where {S} = false
+
+
+function is_dynamic(b::BasicChannel, q::Quantity)
+    (q ∈ keys(b.dynamics)) ? (return true) : (return false)
+end
+
 abstract type Neuron <: Compartment end
 
 
-abstract type Synapse <: Component end
-struct EmptyConnection <: Synapse end
+is_dynamic(q::Quantity, n::Neuron) = (q ∈ keys(dynamics(n)))
 
-abstract type Geometry end
+# struct EmptyConnection <: Synapse end
+"""
+Geometries should have methods dynamics(::Geometry) = Dict(Quantities => Functions)
+defaults(::Geometry) = Dict(Quantities => Numbers)
+
+parameters= setdiff(keys(dynamics), keys(defaults))
+"""
+abstract type Geometry <: AbstractComponent end
 
 
-abstract type PlasticityRule{S} end
-
-struct PlasticisedChannel{S,S2,A,C<:FlowChannel{S,A},P<:PlasticityRule{S2}} <: FlowChannel{Tuple{S,S2},A}
-    channel::C
-    modification::P
+struct NoGeometry{Q<:Quantity, N<:Number} <: Geometry
+    defaults::Dict{Q, N}
 end
 
-function get_name(p::PlasticisedChannel)
-    Symbol(
-        get_name(p.channel),
-        :_with_,
-        get_name(p.mutation)
+dynamics(::NoGeometry) = Dict()
+defaults(n::NoGeometry) = n.defaults
+
+parameters(g::Geometry) = Dict(el => defaults(g)[el] for el in setdiff(keys(defaults(g)), keys(dynamics(g))))
+is_dynamic(q::Quantity, g::Geometry) = (q ∈ keys(dynamics(g)))
+
+
+# function build_vars(g::Geometry)
+#     dyns = map(g |> dynamics |> keys |> collect) do el
+#         _name = shorthand_name(el)
+#         @variables $_name
+#            end |> Iterators.flatten |> collect
+    
+#     stats = map(g |> parameters |> keys |> collect) do el
+#         _name = shorthand_name(el)
+#         @parameters $_name
+#             end |> Iterators.flatten |> collect
+#     return (dyns..., stats...)
+# end
+
+build_vars(g::Geometry) = (build_vars(merge(dynamics(g), parameters(g)), g)...,)
+
+
+abstract type PlasticityRule end
+
+
+### if you want to build a channel without these fields then overwrite the corresponding functions 
+dynamics(b::BasicChannel) = b.dynamics
+name(b::BasicChannel) = b.name
+defaults(b::BasicChannel) = b.defaults 
+
+
+function build_vars_from_owner(comp::Component, owner::Component, which::Function)
+    return map(which(comp)) do quantity
+        _name = shorthand_name(quantity)
+        if has_dynamics(owner, quantity)
+            @variables $_name(t)
+        else
+            @parameters $_name
+        end
+    end |> Iterators.flatten |> collect
+end
+
+build_vars(d::Dict, c::AbstractComponent) = map(keys(d) |> collect) do el
+        _name = shorthand_name(el)
+        if is_dynamic(el, c)
+            @variables $_name(t)
+        else
+            @parameters $_name
+        end
+end |> Iterators.flatten |> collect
+
+
+function build_vars(comp::Component, which::Function)
+    return map(which(comp)) do quantity
+               _name = shorthand_name(quantity)
+               if is_dynamic(comp, quantity)
+                   @variables $_name(t)
+               else
+                   @parameters $_name
+               end
+           end |> Iterators.flatten |> collect
+end
+
+function build_vars(q::Quantity...)
+     _name = shorthand_name(quantity)
+end
+
+function build_defaults(c::Component, sys::ModelingToolkit.AbstractSystem)
+    return Dict(
+                getproperty(sys, shorthand_name(key)) => val 
+                for (key, val) in defaults(c)
+                    )
+end
+
+
+
+"""
+1. concatenate all varnames for component
+2. reorder the varnames to yield a list that corresponds to the ordering of vars
+3. return vars, varnames 
+"""
+function all_vars(c::Component, vars...)
+    
+end
+
+function find_from(q::Quantity, vars...)
+    _name = shorthand_name(q)
+    for el in vars
+        if _name == ModelingToolkit.tosymbol(el, escape=false)
+            return el
+        end
+    end
+end
+
+function (ch::BasicChannel)(owner::Component)
+    vars = get_all_vars(ch, owner)
+    eqs = [v(ch, vars...) for v in values(ch |> dynamics)] |> Iterators.flatten |> collect
+
+    _defaults = Dict(find_from(el, vars...) => defaults(ch)[el] for el in (keys(defaults(ch))) if typeof(defaults(ch)[el])<:Number)
+
+    calculated_defaults = Dict(find_from(el, vars...) => defaults(ch)[el](vars...) for el in (keys(defaults(ch))) if typeof(defaults(ch)[el])<:Function)
+
+    return  ODESystem(eqs, t, defaults=merge(_defaults, calculated_defaults), name=ch.name)
+    # return ODESystem(eqs, t, defaults=build_defaults(ch, sys), name=ch |> name)
+end
+
+
+# ----
+
+
+
+function get_all_vars(ch::Component, owner::Component)
+    vars = (
+        build_vars_from_owner(ch, owner, sensed)...,
+        build_vars(ch, tagged_internal_variables)...,
+        build_vars(ch, untagged_internal_variables)...,
+        build_vars(ch, actuated)...
     )
+end
+
+
+function find_from(q::Vector{Q}, vars...) where Q <: Quantity
+    return [find_from(el, vars...) for el in q]
+end
+
+
+function calc_defaults_from(f::Function, q::Vector{Q}) where Q<:Quantity
+    
+    return function _f(vars...)
+        inputs = find_from(q, vars...)
+        return f(inputs...)
+    end
+end
+export calc_defaults_from
+
+"""
+want 
+
+Voltage(), f: V -> ...
+for q in quantities::
+inputs = find_from(q, vars...)
+return f(inputs...)
+
+"""
+
+defaults_parser(n::Number) = n 
+
+function defaults_parser(f::Function, quantities::Vector{Q}) where Q <: Quantity
+
 end
 

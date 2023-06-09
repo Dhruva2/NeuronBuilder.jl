@@ -1,167 +1,86 @@
-dynamics(n::Neuron) = n.dynamics
-has_dynamics(n::Neuron, species) = haskey(dynamics(n), species)
+"""
+tagged internal variables:
+    everything sensed
+    NOT everything actuated
+    every key in n.dynamics
 
-# defined for reversal and conductance since they belong to a neuron. not conductance (belongs to Link)
-has_dynamics(n::Neuron, ::Type{Current{I}}) where {I} = true
-# has_dynamics(n::Neuron, ::Type{Reversal{I}}) where {I} = haskey(dynamics(n), I)
+no sensed / actuated
 
-
-struct ResetDynamics{T<:Number} <: SpeciesDynamics{Voltage}
-    V_threshold::T
-    V_reset::T
-    function ResetDynamics(x::T, y::T) where {T<:Number}
-        x < y ? error("Threshold lower value than reset.") : new{T}(x, y)
-    end
-end
-
-get_parameters(::ResetDynamics) = @parameters Cₘ V_threshold V_reset
-default_params(l::ResetDynamics, n::Neuron, vars, varnames) = Dict(
-    get_parameters(l) .=> (capacitance(n.geometry), l.V_threshold, l.V_reset)
-)
-
-function (b::ResetDynamics)(n::Neuron, vars, varnames, flux)
-    Cₘ, V_threshold, V_reset = get_parameters(b)
-    V = vars[findfirst(x -> x == Voltage, varnames)]
-    return D(V) ~ (1 / Cₘ) * (flux) #non-standard convention, sum of fluxes already has negative sign because of the (E-V) in currents
-end
-
-kwargs(::SpeciesDynamics, vars, varnames) = NamedTuple()
-function kwargs(b::ResetDynamics, vars, varnames) 
-    V = vars[findfirst(x -> x == Voltage, varnames)]
-    reset = [V ~ b.V_threshold] => [V ~ b.V_reset]
-    return (:continuous_events => reset,)
-end
-struct EmptyNeuron{F<:Number} <: Neuron
-    somatic_parameters::Dict{DataType,F}
-end
-
-EmptyNeuron() = EmptyNeuron(
-    Dict(Voltage => -60.0)
-)
-dynamics(::EmptyNeuron) = Dict{DataType,SpeciesDynamics}()
+untagged internal variables:
+capacitance, anything in geometry 
 
 
-struct BasicNeuron{G<:Geometry,C<:FlowChannel,F<:Real,S<:SpeciesDynamics} <: Neuron
-    geometry::G
-    dynamics::Dict{DataType,S}
-    somatic_parameters::Dict{DataType,F}
-    channels::Vector{C}
+has_dynamics:
+every key in n.dynamics
+anything else? don't think so
+"""
+
+
+struct BasicNeuron{G<:Geometry,Q1 <: Quantity, F<:Function, Q2 <: Quantity, N<:Number, C1<:BasicChannel,C2<:DirectedChannel} <: Neuron
     name::Symbol
+    geometry::G
+    dynamics::Dict{Q1,F}
+    defaults::Dict{Q2, N}
+    owned:: Vector{C1}
+    preceding::Vector{C2}
 end
+
+geometry(b::BasicNeuron) = b.geometry
+dynamics(b::BasicNeuron) = b.dynamics
+defaults(b::BasicNeuron) = b.defaults
+
+# BasicNeuron(name::Symbol, dynamics::Dict{Q1, F}, defaults::Dict{Q2, N}, owned::Vector{C1}) where {Q1 <: Quantity, Q2 <: Quantity, F<:Function, N<:Number, C1 <: Component} = BasicNeuron{G, C1, C1, F, N, S}(name, dynamics, defaults, owned, nothing)
+
+untagged_internal_variables(n::Neuron) = filter(x -> typeof(x) <: UntrackedQuantity, (keys(defaults(n))..., keys(dynamics(n)...) )  )
+
+has_dynamics(n::Neuron, q::Quantity) = (q ∈ keys(dynamics(n))) ? (return true) : (return false)
+
+liu_channels = [Liu.Na(3.0), Liu.CaS(4.0), Liu.CaT(6.0), Liu.KCa(14.0), Liu.Kdr(12.0), Liu.H(2.0), Liu.Leak(3.0)]
+export liu_channels
+
+
+
+
+export geometry, dynamics, defaults, build_defaults
+
+"""
+what variables are missing from map?
+
+Those that are sensed by the owned, and defaulted from the owner instead of the owned
+
+we SHOULD NOT instantiate the internal variables ENa etc. ie the parameters used by the owned
+
+some of the above might be needed by dynamic equations. 
+so we should NOT include them in the overall sys equations through sensor hooks. 
 
 
 """
-building neuron 
-- geometric and electrical (ie capacitance) parameters are unique and should be defined by user
-- number of hooks has to be pre-specified
-- reversals are defined by the ion channels to which it is connected, same for currents
-- channels which have a PlasticityRule (need extra sensors) are treated inside b the same way as those that don't 
-- update equations: voltage equation gets added synapses...for now. TODO Make synapses like channels
 
-# DO LATER: to make it easier for the user, add an extra input which is var (the var in question). so they dont have to find eg voltage by searching through vars and varnames
-# add b as input to channels so they can sense whether their inputs are parmeters or not, using b.dynamics
-"""
+function (b::BasicNeuron)()
+   
 
-function (b::BasicNeuron)(; incoming_connections::Union{Integer, Bool} = false)
-    #shared -> hooks
-    # e.g. species = Voltage or species = Potassium
-    has_dynamics(species) = haskey(b.dynamics, species)
-    # track union of things sensed by the connected channels
+    internal_vars = (build_vars(geometry(b))..., build_vars(b |> dynamics, b)..., build_vars(b |> defaults, b)... )
+    owned_systems = [el(b) for el in b.owned]
+    dynamic_equations = [f(b, owned_systems, internal_vars...) for f in values(b |> dynamics)]
 
-    tracked_names = vcat(Voltage, b.channels .|> sensed |> el -> filter(!isnothing, el) |> Iterators.flatten |> unique)
-    tracked_names = vcat(
-        Voltage,
-        b.channels .|> sensed |> Iterators.flatten |> unique,
-        [keys(b.dynamics)...]
-    ) |> unique!
 
-    state_indices = findall(has_dynamics, tracked_names)
-    param_indices = findall(!has_dynamics, tracked_names)
+    #  only hook dynamic variables. modelingtoolkit screws up for hooking parameters. hence the ∩keys(dynamics(b))
+    sensor_hooks = map(b.owned, owned_systems) do channel, channel_sys 
+                       [find_from(quantity, internal_vars...) ~ getproperty(channel_sys, quantity |> shorthand_name) for quantity in (sensed(channel) ∩ keys(dynamics(b))) if hasproperty(channel_sys, quantity |> shorthand_name)]
+        end |> Iterators.flatten |> collect
 
-    # build state/param ModelingToolkit variables for each of these tracked species 
-    tracked = zeros(Num, length(tracked_names))
 
-    tracked[state_indices] .= reduce(vcat,
-        tracked_names[state_indices] .|> shorthand_name
-        |> instantiate_variables)
-
-    tracked[param_indices] .= reduce(vcat,
-        tracked_names[param_indices] .|> shorthand_name
-        |> instantiate_parameters)
-
-    syns = [@variables $el(t) for el in [Symbol(:Isyn, i) for i = 1:incoming_connections]]
-    my_sum(syns) = incoming_connections == 0 ? 0.0 : sum(reduce(vcat, syns))
-    !(incoming_connections == 0) && (syns = reduce(vcat, syns))
-    chs = [ch(b) for ch in b.channels]
-
-    tracked_fluxes = map(tracked_names[state_indices]) do thing
-        sum(zip(b.channels, chs)) do (channel, channel_sys)
-            get_actuator(channel, channel_sys, thing)
-        end |> Num
-    end 
-
-    # UGLY, make better. maybe add generality for syns:. Like hooks = {Voltage, 3}
-    tracked_fluxes[findfirst(x -> x == Voltage, tracked_names)] += my_sum(syns)
-
-    # hook connections between channel sensors and tracked variables. 
-    outward_connections = reduce(vcat, map(tracked_names, tracked) do species, variable
-        [(variable ~ get_sensor(ch, ch_sys, species))::Equation for (ch, ch_sys) in zip(b.channels, chs) if (get_sensor(ch, ch_sys, species) !== nothing)]::Vector{Equation}
-    end)
-
-    outward_species = reduce(vcat, map(tracked_names) do species
-        [species for (ch, ch_sys) in zip(b.channels, chs) if (get_sensor(ch, ch_sys, species) !== nothing)]
+    sensor_defaults = mapreduce(merge, b.owned, owned_systems) do channel, channel_sys
+        Dict(getproperty(channel_sys, quantity |> shorthand_name) => defaults(b)[quantity] for quantity in sensed(channel) if hasproperty(channel_sys, quantity |> shorthand_name))
     end
-    )
+    
+    _defaults = Dict(find_from(el, internal_vars...) => defaults(b)[el] for el in (keys(defaults(b))))
+    _geom_defaults = Dict(find_from(el, internal_vars...) => defaults(b |>geometry)[el] for el in (keys(defaults(b |>geometry))))
 
-    outward_connection_indices = findall(outward_connections) do el
-        !ModelingToolkit.isparameter(el.rhs)
-    end
+    # other_defaults = ?
 
-    # add currents and inputs to the dynamics of tracked variables
-    inward_connections = [
-        b.dynamics[species](b, tracked, tracked_names, flux) for (flux, species) in zip(tracked_fluxes, tracked_names[state_indices])
-    ]
-
-    # default initial conditions for neural state variables
-    state_defaults = Dict(tracked[el] => b.somatic_parameters[tracked_names[el]] for el in state_indices)
-
-    # default values for hooked parameter values in channels (their internal states/parameters already have defaults)
-    outward_param_indices = findall(outward_connections) do el
-        ModelingToolkit.isparameter(el.rhs)
-    end
-    parameter_defaults = Dict(outward_connections[el].rhs => b.somatic_parameters[outward_species[el]] for el in unique(outward_param_indices))
-
-    # if there are any internal state variables from the b.dynamics laws, store and default them.
-    somatic_states = get_from(b.dynamics, get_states)
-    somatic_state_defaults = mapreduce(merge, values(b.dynamics)) do s
-        default_states(s, b, tracked, tracked_names)
-    end
-
-    # if there are any internal parameter variables from the b.dynamics laws, store and default them.
-    somatic_params = get_from(b.dynamics, get_parameters)
-    somatic_param_defaults = mapreduce(merge, values(b.dynamics)) do s
-        default_params(s, b, tracked, tracked_names)
-    end
-
-    sys = ODESystem(
-        vcat(inward_connections, outward_connections[outward_connection_indices]),
-        t,
-        vcat(tracked[state_indices], somatic_states, syns),
-        somatic_params
-        ;
-        systems=chs,
-        defaults=merge(state_defaults, parameter_defaults, 
-        somatic_state_defaults, somatic_param_defaults),
-        ((kwargs(el, tracked, tracked_names) for el in values(b.dynamics))...)...,
-        name=b.name,
-    )
-    if typeof(incoming_connections) == Bool && !incoming_connections
-        return structural_simplify(sys)
-    elseif typeof(incoming_connections) <: Integer
-        return sys
-    end
-
-
+    return ODESystem(
+        vcat(dynamic_equations, sensor_hooks),
+        t;systems = owned_systems, defaults = merge(_defaults, _geom_defaults, sensor_defaults), name=b.name)
 end
 
-export get_from, get_states, default_states, default_params, get_parameters

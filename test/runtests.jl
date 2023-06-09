@@ -1,6 +1,6 @@
-using NeuronBuilder
+using NBuilder
 using Test
 
-@testset "NeuronBuilder.jl" begin
+@testset "NBuilder.jl" begin
     # Write your tests here.
 end
