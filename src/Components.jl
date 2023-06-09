@@ -6,34 +6,21 @@ function get_name(ch::Component)
 end
 
 
-
-
 abstract type Compartment <: Component end
 abstract type BasicChannel <: Component end
 abstract type DirectedChannel <: BasicChannel end
 struct EmptySynapse <: DirectedChannel end 
 
 
-# is_dynamic(::BasicChannel, ::Current{S}) where {S}  = true
-# is_dynamic(::BasicChannel, ::Conductance{S}) where {S} = false
-
 
 function is_dynamic(b::BasicChannel, q::Quantity)
     (q ∈ keys(b.dynamics)) ? (return true) : (return false)
 end
 
-abstract type Neuron <: Compartment end
-
-
 is_dynamic(q::Quantity, n::Neuron) = (q ∈ keys(dynamics(n)))
 
-# struct EmptyConnection <: Synapse end
-"""
-Geometries should have methods dynamics(::Geometry) = Dict(Quantities => Functions)
-defaults(::Geometry) = Dict(Quantities => Numbers)
-
-parameters= setdiff(keys(dynamics), keys(defaults))
-"""
+abstract type Neuron <: Compartment end
+abstract type PlasticityRule end
 abstract type Geometry <: AbstractComponent end
 
 
@@ -46,25 +33,10 @@ defaults(n::NoGeometry) = n.defaults
 
 parameters(g::Geometry) = Dict(el => defaults(g)[el] for el in setdiff(keys(defaults(g)), keys(dynamics(g))))
 is_dynamic(q::Quantity, g::Geometry) = (q ∈ keys(dynamics(g)))
-
-
-# function build_vars(g::Geometry)
-#     dyns = map(g |> dynamics |> keys |> collect) do el
-#         _name = shorthand_name(el)
-#         @variables $_name
-#            end |> Iterators.flatten |> collect
-    
-#     stats = map(g |> parameters |> keys |> collect) do el
-#         _name = shorthand_name(el)
-#         @parameters $_name
-#             end |> Iterators.flatten |> collect
-#     return (dyns..., stats...)
-# end
-
 build_vars(g::Geometry) = (build_vars(merge(dynamics(g), parameters(g)), g)...,)
 
 
-abstract type PlasticityRule end
+
 
 
 ### if you want to build a channel without these fields then overwrite the corresponding functions 
@@ -117,16 +89,6 @@ function build_defaults(c::Component, sys::ModelingToolkit.AbstractSystem)
 end
 
 
-
-"""
-1. concatenate all varnames for component
-2. reorder the varnames to yield a list that corresponds to the ordering of vars
-3. return vars, varnames 
-"""
-function all_vars(c::Component, vars...)
-    
-end
-
 function find_from(q::Quantity, vars...)
     _name = shorthand_name(q)
     for el in vars
@@ -145,12 +107,7 @@ function (ch::BasicChannel)(owner::Component)
     calculated_defaults = Dict(find_from(el, vars...) => defaults(ch)[el](vars...) for el in (keys(defaults(ch))) if typeof(defaults(ch)[el])<:Function)
 
     return  ODESystem(eqs, t, defaults=merge(_defaults, calculated_defaults), name=ch.name)
-    # return ODESystem(eqs, t, defaults=build_defaults(ch, sys), name=ch |> name)
 end
-
-
-# ----
-
 
 
 function get_all_vars(ch::Component, owner::Component)
@@ -177,19 +134,4 @@ function calc_defaults_from(f::Function, q::Vector{Q}) where Q<:Quantity
 end
 export calc_defaults_from
 
-"""
-want 
-
-Voltage(), f: V -> ...
-for q in quantities::
-inputs = find_from(q, vars...)
-return f(inputs...)
-
-"""
-
-defaults_parser(n::Number) = n 
-
-function defaults_parser(f::Function, quantities::Vector{Q}) where Q <: Quantity
-
-end
 

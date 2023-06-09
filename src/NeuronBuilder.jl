@@ -1,4 +1,4 @@
-module NBuilder
+module NeuronBuilder
 
 using ModelingToolkit
 
@@ -42,4 +42,5 @@ export Liu
 
 include("Neurons.jl")
 export BasicNeuron
+export geometry, dynamics, defaults, build_defaults
 end

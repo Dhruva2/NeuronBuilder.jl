@@ -1,7 +1,7 @@
 module BasicComponents
 
 using ModelingToolkit
-using ..NBuilder
+using ..NeuronBuilder
 
 import ..sensed, ..actuated, ..is_dynamic, ..has_dynamics, ..tagged_internal_variables, ..untagged_internal_variables
 

@@ -41,21 +41,6 @@ export liu_channels
 
 
 
-export geometry, dynamics, defaults, build_defaults
-
-"""
-what variables are missing from map?
-
-Those that are sensed by the owned, and defaulted from the owner instead of the owned
-
-we SHOULD NOT instantiate the internal variables ENa etc. ie the parameters used by the owned
-
-some of the above might be needed by dynamic equations. 
-so we should NOT include them in the overall sys equations through sensor hooks. 
-
-
-"""
-
 function (b::BasicNeuron)()
    
 

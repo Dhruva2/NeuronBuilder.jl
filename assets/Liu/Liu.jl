@@ -1,7 +1,7 @@
 module Liu
 
 using ModelingToolkit
-using ..NBuilder
+using ..NeuronBuilder
 
 
 include("channel_dynamics.jl")
