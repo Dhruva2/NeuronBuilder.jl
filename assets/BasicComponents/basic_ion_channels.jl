@@ -33,30 +33,28 @@ struct BasicSingleIonChannel{I<:Species, F<:Function, N, Q1 <: Quantity, Q2<:Qua
     defaults::Dict{Q2,N}
 end
 
-sensed(b::BasicSingleIonChannel) = (Voltage(), Reversal{typeof(b.ion)}())
-actuated(b::BasicSingleIonChannel) = (Current{Voltage}(), Current{typeof(b.ion)}())
-tagged_internal_variables(b::BasicSingleIonChannel) = (Conductance{typeof(b.ion)}(),)
+sensed(b::BasicSingleIonChannel) = Set((Voltage(), Reversal{typeof(b.ion)}(), b.ion))
+actuated(b::BasicSingleIonChannel) = Set((Current{Voltage}(), Current{typeof(b.ion)}()))
+tagged_internal_variables(b::BasicSingleIonChannel) = Set((Conductance{typeof(b.ion)}(),Conductance{Voltage}() ))
 
-
-
-### delete this:
-has_dynamics(::BasicSingleIonChannel, ::Voltage) = true
-has_dynamics(::BasicSingleIonChannel, ::Calcium) = true
-has_dynamics(::BasicSingleIonChannel, ::Reversal{S}) where S = false
 
 
 struct BasicMultipleIonChannel{F<:Function,N,Q1<:Quantity,Q2<:Quantity,Q3<:Quantity,Q4<:Quantity} <: BasicChannel
     name::Symbol
-    sensed::Vector{Q1}
-    actuated::Vector{Q2}
+    sensed::Set{Q1}
+    actuated::Set{Q2}
     dynamics::Dict{Q3,F}
     defaults::Dict{Q4,N}
 end
 
 
-sensed(b::BasicMultipleIonChannel) = (Voltage(), b.sensed..., [Reversal{typeof(el)}() for el in b.sensed]...)
-actuated(b::BasicMultipleIonChannel) = ([Current{typeof(el)}() for el in b.actuated]..., Current{Voltage}())
-tagged_internal_variables(b::BasicMultipleIonChannel) = (map(i -> Conductance{typeof(i)}(), b.sensed)...,)
+# sensed(b::BasicMultipleIonChannel) = b.sensed
+
+sensed(b::BasicMultipleIonChannel) = Set((Voltage(), b.sensed...)) # NOT EQUAL TO B.SENSED
+actuated(b::BasicMultipleIonChannel) = Set(((Current{typeof(el)}() for el in b.actuated)..., Current{Voltage}()))
+tagged_internal_variables(b::BasicMultipleIonChannel) = Set(Conductance{typeof(i)}() for i in b.actuated if typeof(i)<:Species) 
+
+# Set(map(i -> Conductance{typeof(i)}(), b.sensed)...,)
 
 
 
@@ -64,9 +62,6 @@ tagged_internal_variables(b::BasicMultipleIonChannel) = (map(i -> Conductance{ty
 """
 KCa channel is calsium sensitive potassium
 
-gatings:
-m^4
-m^3 h
-m
-no gate (leak)
+
+Sensed: reversal(actuated ion), Voltage, sensed ions.
 """

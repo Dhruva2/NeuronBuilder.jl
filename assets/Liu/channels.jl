@@ -71,8 +71,8 @@ Ka(x) = BasicComponents.BasicSingleIonChannel(
 
 KCa(x) = BasicComponents.BasicMultipleIonChannel(
     :KCa,
-    [Calcium(), Potassium()], #sensed
-    [Potassium()], #actuated
+    Set((Calcium(), Reversal{Potassium}(), Reversal{Calcium}(), Voltage())), #sensed
+    Set((Potassium(),)), #actuated
     Dict( #dynamics
         UntrackedQuantity(:m) => Liu.channel_dynamics[:KCa][:m],
         Current{Voltage}() => BasicComponents.basic_mh_current(Potassium(), :m => 4, :h => 0),

@@ -17,12 +17,14 @@ function is_dynamic(b::BasicChannel, q::Quantity)
     (q ∈ keys(b.dynamics)) ? (return true) : (return false)
 end
 
-is_dynamic(q::Quantity, n::Neuron) = (q ∈ keys(dynamics(n)))
+
 
 abstract type Neuron <: Compartment end
 abstract type PlasticityRule end
 abstract type Geometry <: AbstractComponent end
 
+
+is_dynamic(q::Quantity, n::Neuron) = (q ∈ keys(dynamics(n)))
 
 struct NoGeometry{Q<:Quantity, N<:Number} <: Geometry
     defaults::Dict{Q, N}
@@ -46,35 +48,38 @@ defaults(b::BasicChannel) = b.defaults
 
 
 function build_vars_from_owner(comp::Component, owner::Component, which::Function)
-    return map(which(comp)) do quantity
+    return Iterators.map(which(comp)) do quantity
         _name = shorthand_name(quantity)
         if has_dynamics(owner, quantity)
-            @variables $_name(t)
+            el, = @variables $_name(t)
         else
-            @parameters $_name
+            el, = @parameters $_name
         end
-    end |> Iterators.flatten |> collect
+        return el
+    end # |> Iterators.flatten |> collect
 end
 
-build_vars(d::Dict, c::AbstractComponent) = map(keys(d) |> collect) do el
+build_vars(d::Dict, c::AbstractComponent) = Iterators.map(keys(d)) do el
         _name = shorthand_name(el)
         if is_dynamic(el, c)
-            @variables $_name(t)
+            el, = @variables $_name(t)
         else
-            @parameters $_name
+            el, = @parameters $_name
         end
-end |> Iterators.flatten |> collect
+        return el
+end #|> Iterators.flatten |> collect
 
 
 function build_vars(comp::Component, which::Function)
-    return map(which(comp)) do quantity
+    return Iterators.map(which(comp)) do quantity
                _name = shorthand_name(quantity)
                if is_dynamic(comp, quantity)
-                   @variables $_name(t)
+                  el, = @variables $_name(t)
                else
-                   @parameters $_name
+                el, = @parameters $_name
                end
-           end |> Iterators.flatten |> collect
+               return el
+           end #|> Iterators.flatten |> collect
 end
 
 function build_vars(q::Quantity...)
@@ -111,12 +116,12 @@ end
 
 
 function get_all_vars(ch::Component, owner::Component)
-    vars = (
-        build_vars_from_owner(ch, owner, sensed)...,
-        build_vars(ch, tagged_internal_variables)...,
-        build_vars(ch, untagged_internal_variables)...,
-        build_vars(ch, actuated)...
-    )
+    vars = Iterators.flatten((
+        build_vars_from_owner(ch, owner, sensed),
+        build_vars(ch, tagged_internal_variables),
+        build_vars(ch, untagged_internal_variables),
+        build_vars(ch, actuated)
+        )) |> Set
 end
 
 

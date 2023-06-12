@@ -13,6 +13,8 @@ export Species, SpeciesProperty, Ion, SpeciesDynamics, Voltage, Sodium, Potassiu
 
 export Quantity, UntrackedQuantity, NoGeometry
 
+export Previous, Post, OrderRelation
+
 
 include("Components.jl")
 export Compartment, Component, BasicChannel, DirectedChannel, Neuron, Geometry, PlasticityRule, EmptySynapse

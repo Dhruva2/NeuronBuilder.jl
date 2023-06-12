@@ -49,8 +49,21 @@ prefix_name(::Capacitance) = :C
 
 shorthand_name(S::SpeciesProperty{I}) where {I} = Symbol(prefix_name(S), shorthand_name(I()))
 shorthand_name(S::SpeciesProperty{Voltage}) = prefix_name(S) 
-
 shorthand_name(u::UntrackedQuantity) = u.name
+
+
+abstract type OrderRelation end
+struct Previous{Q} <: OrderRelation 
+quantity::Q
+end
+suffix_name(::Previous) = :_pre
+
+struct Post{Q} <: OrderRelation 
+quantity::Q
+end
+suffix_name(::Post) = :_post
+
+shorthand_name(o::OrderRelation) = Symbol(shorthand_name(o.quantity), suffix_name(o))
 
 
 # abstract type QuantityType end 
