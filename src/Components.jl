@@ -94,23 +94,12 @@ function build_defaults(c::Component, sys::ModelingToolkit.AbstractSystem)
 end
 
 
-function find_from(q::Quantity, vars...)
-    _name = shorthand_name(q)
-    for el in vars
-        if _name == ModelingToolkit.tosymbol(el, escape=false)
-            return el
-        end
-    end
-end
 
 function (ch::BasicChannel)(owner::Component)
     vars = get_all_vars(ch, owner)
-    eqs = [v(ch, vars...) for v in values(ch |> dynamics)] |> Iterators.flatten |> collect
-
+    eqs = [v(ch, vars...) for v in values(ch |> dynamics)] # |> Iterators.flatten |> collect
     _defaults = Dict(find_from(el, vars...) => defaults(ch)[el] for el in (keys(defaults(ch))) if typeof(defaults(ch)[el])<:Number)
-
     calculated_defaults = Dict(find_from(el, vars...) => defaults(ch)[el](vars...) for el in (keys(defaults(ch))) if typeof(defaults(ch)[el])<:Function)
-
     return  ODESystem(eqs, t, defaults=merge(_defaults, calculated_defaults), name=ch.name)
 end
 
@@ -125,10 +114,24 @@ function get_all_vars(ch::Component, owner::Component)
 end
 
 
+
+function find_from(q::Quantity, vars...)
+    _name = shorthand_name(q)
+    for el in vars
+        if _name == ModelingToolkit.tosymbol(el, escape=false)
+            return el
+        end
+    end
+    # return filter(x -> ModelingToolkit.tosymbol(x, escape=false) == _name, vars) |> Iterators.flatten |> collect
+end
+
 function find_from(q::Vector{Q}, vars...) where Q <: Quantity
     return [find_from(el, vars...) for el in q]
 end
 
+function find_from(q::Set{Q}, vars...) where {Q<:Quantity}
+    return (find_from(el, vars...) for el in q)
+end
 
 function calc_defaults_from(f::Function, q::Vector{Q}) where Q<:Quantity
     

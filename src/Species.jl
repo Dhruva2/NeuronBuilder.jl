@@ -3,8 +3,8 @@
 abstract type Quantity end
 abstract type TrackedQuantity <: Quantity end
 abstract type Species <: TrackedQuantity end
-abstract type SpeciesProperty{S<:Species} <: TrackedQuantity end
-abstract type SpeciesDynamics{F<:Species} <:TrackedQuantity end
+abstract type SpeciesProperty{S<:Quantity} <: TrackedQuantity end
+abstract type SpeciesDynamics{F<:Quantity} <:TrackedQuantity end
 abstract type Ion <: Species end
 abstract type PseudoIon <: Ion end
 
@@ -25,11 +25,11 @@ struct Leak <: PseudoIon end
 
 
 
-struct Reversal{S<:Species} <: SpeciesProperty{S} end
-struct Current{S<:Species} <: SpeciesProperty{S} end
-struct Conductance{S<:Species} <: SpeciesProperty{S} end
+struct Reversal{S<:Quantity} <: SpeciesProperty{S} end
+struct Current{S<:Quantity} <: SpeciesProperty{S} end
+struct Conductance{S<:Quantity} <: SpeciesProperty{S} end
 struct mRNA{I<:Ion} <: SpeciesProperty{I} end
-struct Capacitance{S<:Species} <: SpeciesProperty{S} end
+struct Capacitance{S<:Quantity} <: SpeciesProperty{S} end
 
 ### all of these shorthand/prefix names should be unique!!
 shorthand_name(::Voltage) = :V
@@ -52,27 +52,24 @@ shorthand_name(S::SpeciesProperty{Voltage}) = prefix_name(S)
 shorthand_name(u::UntrackedQuantity) = u.name
 
 
-abstract type OrderRelation end
-struct Previous{Q} <: OrderRelation 
-quantity::Q
+abstract type OrderRelation{Q<:Quantity} <: Quantity end
+struct Previous{Q<:Quantity} <: OrderRelation{Q}
 end
 suffix_name(::Previous) = :_pre
 
-struct Post{Q} <: OrderRelation 
-quantity::Q
-end
+struct Post{Q<:Quantity} <: OrderRelation{Q} end
 suffix_name(::Post) = :_post
 
-shorthand_name(o::OrderRelation) = Symbol(shorthand_name(o.quantity), suffix_name(o))
+shorthand_name(o::OrderRelation{S}) where {S} = Symbol(shorthand_name(S()), suffix_name(o))
 
 
-# abstract type QuantityType end 
-# struct Flux <: QuantityType end
-# struct Fluence <: QuantityType end
 
-# variable_type(::Species) = Fluence()
-# variable_type(::Reversal) = Fluence() # doesn't determine dynamics. eg reversal an be dynamic
-# variable_type(::Conductance) = Fluence()
-# variable_type(::mRNA) = Fluence()
-# variable_type(::Current) = Flux()
+abstract type Neurotransmitter <: Species end
+struct Choline <: Neurotransmitter end
+struct Glutamate <: Neurotransmitter end 
+
+shorthand_name(::Choline) = :chol
+shorthand_name(::Glutamate) = :glut
+
+
 

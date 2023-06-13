@@ -37,6 +37,7 @@ defaults(b::BasicNeuron) = merge(
 untagged_internal_variables(n::Neuron) = filter(x -> typeof(x) <: UntrackedQuantity, (keys(defaults(n))..., keys(dynamics(n)...) )  )
 
 has_dynamics(n::Neuron, q::Quantity) = (q ∈ keys(dynamics(n))) ? (return true) : (return false)
+has_dynamics(n::Neuron, o::OrderRelation{Q}) where Q = has_dynamics(n, Q())
 
 liu_channels = [Liu.Na(3.0), Liu.CaS(4.0), Liu.CaT(6.0), Liu.KCa(14.0), Liu.Kdr(12.0), Liu.H(2.0), Liu.Leak(3.0)]
 export liu_channels
@@ -68,19 +69,24 @@ Time dependent variable or parameter? Former if the subject of dynamical equatio
 function (b::BasicNeuron)()
    
 
-    internal_vars = (build_vars(geometry(b))..., build_vars(b |> dynamics, b)..., build_vars(b |> defaults, b)... )
-    owned_systems = [el(b) for el in b.owned]
+    internal_vars = (build_vars(geometry(b)), build_vars(b |> dynamics, b), build_vars(b |> defaults, b)) |> Iterators.flatten |> Set
+    # (build_vars(geometry(b))..., build_vars(b |> dynamics, b)..., build_vars(b |> defaults, b)... )
+    
+    all_owned = vcat(b.owned, b.preceding)
+    owned_systems = [el(b) for el in all_owned]
+    # preceding_systems = [el(b) for el in b.preceding]
+
     dynamic_equations = [f(b, owned_systems, internal_vars...) for f in values(b |> dynamics)]
 
 
     #  only hook dynamic variables. modelingtoolkit screws up for hooking parameters. hence the ∩keys(dynamics(b))
-    sensor_hooks = map(b.owned, owned_systems) do channel, channel_sys 
+    sensor_hooks = map(all_owned, owned_systems) do channel, channel_sys 
                        (find_from(quantity, internal_vars...) ~ getproperty(channel_sys, quantity |> shorthand_name) for quantity in (sensed(channel) ∩ keys(dynamics(b))) if hasproperty(channel_sys, quantity |> shorthand_name))
         end |> Iterators.flatten |> collect
 
 
-    sensor_defaults = mapreduce(merge, b.owned, owned_systems) do channel, channel_sys
-        Dict(getproperty(channel_sys, quantity |> shorthand_name) => defaults(b)[quantity] for quantity in sensed(channel) if hasproperty(channel_sys, quantity |> shorthand_name))
+    sensor_defaults = mapreduce(merge, all_owned, owned_systems) do channel, channel_sys
+        Dict(getproperty(channel_sys, quantity |> shorthand_name) => defaults(b)[quantity] for quantity in sensed(channel) if (hasproperty(channel_sys, quantity |> shorthand_name) && haskey(defaults(b), quantity)))
     end
     
     _defaults = Dict(find_from(el, internal_vars...) => defaults(b)[el] for el in (keys(defaults(b))))

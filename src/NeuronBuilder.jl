@@ -14,7 +14,7 @@ export Species, SpeciesProperty, Ion, SpeciesDynamics, Voltage, Sodium, Potassiu
 export Quantity, UntrackedQuantity, NoGeometry
 
 export Previous, Post, OrderRelation
-
+export Choline
 
 include("Components.jl")
 export Compartment, Component, BasicChannel, DirectedChannel, Neuron, Geometry, PlasticityRule, EmptySynapse
@@ -31,6 +31,18 @@ function has_dynamics() end #delete this one prob
 function tagged_internal_variables() end
 function untagged_internal_variables() end 
 
+
+
+
+include("Neurons.jl")
+export BasicNeuron
+export geometry, dynamics, defaults, build_defaults
+
+
+include("Synapses.jl")
+export BasicSynapse
+
+
 include("../assets/BasicComponents/BasicComponents.jl")
 using .BasicComponents
 export BasicComponents
@@ -42,7 +54,4 @@ using .Liu
 export Liu
 
 
-include("Neurons.jl")
-export BasicNeuron
-export geometry, dynamics, defaults, build_defaults
 end

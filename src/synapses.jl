@@ -1,14 +1,3 @@
-"""
-Previous system:
-
-- Currents totted up manually in neuron()
-
-Hooking:
--add_connection() did pre ~ pre and post ~ post only for voltage
-
-
-"""
-
 
 """
 NB in further instantiations, the following might be our friends:
@@ -36,10 +25,17 @@ for el in Pre
 end
 
 for el in Post
-    sys.el ~ pre_sys.el # sensed parts #NOT INCLUDING ACTUATIONS
+    sys.el ~ post_sys.el # sensed parts #NOT INCLUDING ACTUATIONS
 end
 
-actuations are hooked in post_neuron building script. 
+actuations are hooked in post_neuron building script. how to distoinguish Current{Voltage} and Current{Post{Voltage}}? currently eg Cdv/dt dynamics only looks for Current{Voltage}
+
+
+Option 1: get rid of Post. Only have Pre. since the synapse anyway beongs to the actuated channel.
+Much easier than some weird stripping of Post at particular points.
+Any issues? Can't think of any
+
+
 
 1. 
 """
@@ -49,7 +45,22 @@ Basic synapse {Cholinergic}
 
 sensed(Previous, s::Synapse) = (Voltage(), )
 
+ISSUE: how do I determine if sensed quantities are dynaimc? 
+CURRENT WORKAROUND: set this manually for now. BasicSynapses only sense voltage, and this is dynamic.
+
 """
+
+function build_vars_from_owner(s::DirectedChannel, post::Component, which::Function)
+    return Iterators.map(which(s)) do quantity
+        _name = shorthand_name(quantity)
+        if typeof(quantity) <: Previous || has_dynamics(post, quantity)
+            el, = @variables $_name(t)
+        else
+            el, = @parameters $_name
+        end
+        return el
+    end
+end
 
 
 
@@ -61,14 +72,11 @@ struct BasicSynapse{Q1<:Quantity,Q2<:Quantity,Q3<:Quantity,F<:Function,N} <: Dir
 end
 
 
-pre_sensed(b::BasicSynapse) = Set(Voltage(),)
-post_sensed(b::BasicSynapse) = Set(Voltage(),)
+pre_sensed(b::BasicSynapse) = Set((Previous{Voltage}(),))
+post_sensed(b::BasicSynapse) = Set((Voltage(),))
 sensed(b::BasicSynapse) = pre_sensed(b) ∪ post_sensed(b)
-# sensed(b::BasicSynapse) = ((pre_sensed(b) ∪ post_sensed(b))...,)
 actuated(b::BasicSynapse) = Set((Current{Voltage}(),))
-tagged_internal_variables(b::BasicSynapse) = Set(Conductance{b.type})
-
-
+tagged_internal_variables(b::BasicSynapse) = Set((Conductance{b.type |> typeof}(), Reversal{b.type |> typeof}()))
 
 
 
@@ -76,7 +84,7 @@ tagged_internal_variables(b::BasicSynapse) = Set(Conductance{b.type})
 
 function (ch::BasicSynapse)(owner::Component)
     vars = get_all_vars(ch, owner)
-    eqs = [v(ch, vars...) for v in values(ch |> dynamics)] |> Iterators.flatten |> collect
+    eqs = [v(ch, vars...) for v in values(ch |> dynamics)] #|> Iterators.flatten |> collect
     _defaults = Dict(find_from(el, vars...) => defaults(ch)[el] for el in (keys(defaults(ch))) if typeof(defaults(ch)[el]) <: Number)
     calculated_defaults = Dict(find_from(el, vars...) => defaults(ch)[el](vars...) for el in (keys(defaults(ch))) if typeof(defaults(ch)[el]) <: Function)
 
@@ -85,44 +93,33 @@ end
 
 
 
-"""
-dynamics: s, Ichol
-parameters: k₋, Vth, δ
-"""
 
-_defaults = Dict(
-    UntrackedQuantity(:k₋)  => 0.025,
-    UntrackedQuantity(:Vth) => -35.0,
-    UntrackedQuantity(:δ)   => 5.0,
-    UntrackedQuantity(:s̄)   => 0.0,
-    UntrackedQuantity(:Eₛ)  => -70.0
-)
 
-_dynamics = Dict(
 
-)
+# _dynamics = Dict(
+#     UntrackedQuantity(:s) => Liu.synaptic_channel_dynamics[:s],
+#     Current{Voltage}() => BasicComponents.basic_mh_current(Choline(), :s => 1, :h => 0; output = Voltage())
+# )
 
-UntrackedQuantity(:s̄) => 1.0 / (1.0 + exp((syn.Vth - Vpre) / syn.δ))
+# _defaults = Dict(
+#     UntrackedQuantity(:k₋) => 0.025,
+#     UntrackedQuantity(:Vth) => -35.0,
+#     UntrackedQuantity(:δ) => 5.0,
+#     UntrackedQuantity(:s) => 0.0,
+#     Reversal{Choline}() => -70.0
+# )
 
-τs(syn::Glut, Vpre) = (1.0 - s̄(syn, Vpre)) / syn.k₋
-
-function Cholinergic_dynamics(c::Component, vars...)
-    τ(s) = 
-        s̄, k₋, Vth, δ = find_from(c, [UntrackedQuantity(:s̄), UntrackedQuantity(:k₋)], vars...)
-    return [D(s) ~ ...]
-end
+# chol = BasicSynapse(
+#     :chol,
+#     Choline(),
+#     _dynamics,
+#     _defaults
+# )
 
 
 
 
-dynamics = Dict(
 
-)
-
-chol = BasicSynapse(
-    :chol,
-    Choline(),
-    s,
-    b
-)
-
+# eqs = [D(s) ~ (1 / τs(ch, Vpre)) * (s̄(ch, Vpre) - s),
+#     IChol ~ -ḡChol * s * (Vpost - ch.Eₛ)]
+# current = [eqs[2]]

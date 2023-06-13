@@ -21,7 +21,7 @@ THE PROBLEM IS THE KCA CHANNEL
 """
 
 function untagged_internal_variables(b::BasicChannel)
-    iter = Iterators.flatten(zip(keys(b.dynamics), keys(b.defaults)))
+    iter = Iterators.flatten((keys(b |> dynamics), keys(b |> defaults)))
     return filter(x -> typeof(x) <: UntrackedQuantity, unique(iter))
 end
 

@@ -1,5 +1,8 @@
 
 
+
+
+
 Liu_conv = 10.0
 
 liu_channels = [Liu.Na(700.0 * Liu_conv), Liu.CaS(4.0 * Liu_conv), Liu.CaT(2.0 * Liu_conv), Liu.Ka(50.0 * Liu_conv), Liu.KCa(40.0 * Liu_conv),
@@ -27,7 +30,7 @@ liu() = BasicNeuron(
         Calcium() => 0.05,
         Reversal{Calcium}() => 0.0),
     liu_channels,
-    [EmptySynapse()]
+    [Liu.chol(4.0), Liu.chol(5.0; name=:Chol2)]
 )
 
 b = liu()

@@ -1,6 +1,6 @@
 
 function leaky_integrator(V, g, τ, g∞)
-    return [D(g) ~ (1 / τ(V)) * (g∞(V) - g)]
+    return D(g) ~ (1 / τ(V)) * (g∞(V) - g)
 end
 
 gating_dynamics = Dict(
@@ -42,6 +42,19 @@ gating_dynamics = Dict(
     )
 )
 
+
+
+synaptic_gating_dynamics = Dict(
+    :Chol => Dict{Symbol,Any}(
+        :s̄ => (Vth, Vpre, δ) -> 1.0 / (1.0 + exp((Vth - Vpre) / δ))
+    ),
+    :Glut => Dict(
+        :s̄ => x -> x)
+)
+
+push!(synaptic_gating_dynamics[:Chol], :τs => (Vth, Vpre, δ, k₋) -> (1.0 - (synaptic_gating_dynamics[:Chol][:s̄](Vth, Vpre, δ)) / k₋))
+
+
 channel_dynamics = Dict(
     :Na => Dict(
         :m =>   (c::Component, vars...) ->
@@ -66,7 +79,7 @@ channel_dynamics = Dict(
         :m =>  (c::Component, vars...) -> begin
                 τm, m∞ = gating_dynamics[:KCa][:τm], gating_dynamics[:KCa][:m∞]
                 V, Ca, m = find_from([Voltage(), Calcium(), UntrackedQuantity(:m)], vars...)
-                [D(m) ~ (1 / τm(V)) * (m∞(V, Ca) - m)]
+                D(m) ~ (1 / τm(V)) * (m∞(V, Ca) - m)
             end
     ),
     :Ka => Dict(
@@ -83,4 +96,14 @@ channel_dynamics = Dict(
         :m => (c::Component, vars...) ->
             leaky_integrator(find_from([Voltage(), UntrackedQuantity(:m)], vars...)..., gating_dynamics[:H][:τm], gating_dynamics[:H][:m∞]) 
     )
+)
+
+synaptic_channel_dynamics = Dict(
+    :s => (c::Component, vars...) -> begin
+        g = synaptic_gating_dynamics[:Chol]
+        τs = g[:τs]
+        s̄ = g[:s̄]
+        s, k₋, Vth, δ, E, Vpre, Vpost = find_from([UntrackedQuantity(:s), UntrackedQuantity(:k₋), UntrackedQuantity(:Vth), UntrackedQuantity(:δ), Reversal{Choline}(), Previous{Voltage}(), Voltage()], vars...)
+        D(s) ~ (1 / τs(Vth, Vpre, δ, k₋)) * (s̄(Vth, Vpre, δ) - s)
+    end
 )
