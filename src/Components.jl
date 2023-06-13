@@ -9,7 +9,7 @@ end
 abstract type Compartment <: Component end
 abstract type BasicChannel <: Component end
 abstract type DirectedChannel <: BasicChannel end
-struct EmptySynapse <: DirectedChannel end 
+
 
 
 

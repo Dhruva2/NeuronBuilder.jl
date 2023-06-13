@@ -50,6 +50,19 @@ CURRENT WORKAROUND: set this manually for now. BasicSynapses only sense voltage,
 
 """
 
+struct EmptySynapse <: DirectedChannel end
+sensed(::EmptySynapse) = Set()
+actuated(::EmptySynapse) = Set()
+tagged_internal_variables(::EmptySynapse) = Set()
+untagged_internal_variables(::EmptySynapse) = Set()
+defaults(::EmptySynapse) = Dict()
+dynamics(::EmptySynapse) = Dict()
+name(::EmptySynapse) = :empty
+
+
+(e::EmptySynapse)(x::Component) = ODESystem([], t; name=:empty)
+
+
 function build_vars_from_owner(s::DirectedChannel, post::Component, which::Function)
     return Iterators.map(which(s)) do quantity
         _name = shorthand_name(quantity)

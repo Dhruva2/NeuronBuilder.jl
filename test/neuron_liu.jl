@@ -1,7 +1,7 @@
 
 
 
-
+using ModelingToolkit, OrdinaryDiffEq, Plots
 
 Liu_conv = 10.0
 
@@ -12,6 +12,10 @@ liu_channels = [Liu.Na(700.0 * Liu_conv), Liu.CaS(4.0 * Liu_conv), Liu.CaT(2.0 *
 τCa = 20.0
 Ca∞ = 0.05
 fxarea = 14.96 * 0.0628
+
+
+# synapses = [Liu.chol(4.0)]
+synapses = [EmptySynapse()]
 
 liu() = BasicNeuron(
     :liu,
@@ -30,9 +34,11 @@ liu() = BasicNeuron(
         Calcium() => 0.05,
         Reversal{Calcium}() => 0.0),
     liu_channels,
-    [Liu.chol(4.0), Liu.chol(5.0; name=:Chol2)]
+    synapses
 )
 
 b = liu()
 sys = b() |> structural_simplify
-
+prob = ODEProblem(sys, [], (0.0, 5000.0), [])
+sol = solve(prob, Tsit5())
+plot(sol)
