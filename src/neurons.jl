@@ -39,8 +39,6 @@ untagged_internal_variables(n::Neuron) = filter(x -> typeof(x) <: UntrackedQuant
 has_dynamics(n::Neuron, q::Quantity) = (q ∈ keys(dynamics(n))) ? (return true) : (return false)
 has_dynamics(n::Neuron, o::OrderRelation{Q}) where Q = has_dynamics(n, Q())
 
-liu_channels = [Liu.Na(3.0), Liu.CaS(4.0), Liu.CaT(6.0), Liu.KCa(14.0), Liu.Kdr(12.0), Liu.H(2.0), Liu.Leak(3.0)]
-export liu_channels
 
 
 """
